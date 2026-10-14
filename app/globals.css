@@ -1,26 +1,72 @@
 @import "tailwindcss";
 
+/*
+ * Lane's Lair design tokens.
+ * Use them as Tailwind utilities: bg-canvas, bg-panel, bg-raised, border-line,
+ * text-fg, text-muted, text-subtle, bg-accent, text-accent, etc.
+ */
+@theme {
+  --color-canvas: #111216;
+  --color-panel: #18191f;
+  --color-raised: #20222a;
+  --color-hover: #272a33;
+  --color-line: #2a2d36;
+  --color-line-strong: #383c47;
+
+  --color-fg: #f3f4f7;
+  --color-muted: #a3a6b4;
+  --color-subtle: #7c8090;
+
+  --color-accent: #8b7cf8;
+  --color-accent-strong: #a091ff;
+  --color-accent-soft: rgb(139 124 248 / 0.14);
+  --color-on-accent: #0f0d1f;
+
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-fg);
+}
+
+/* Consistent, clearly visible keyboard focus ring everywhere. */
+:focus-visible {
+  outline: 2px solid var(--color-accent-strong);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+::selection {
+  background: rgb(139 124 248 / 0.35);
+}
+
+/* Native <dialog> backdrop. */
+dialog::backdrop {
+  background: rgb(5 5 8 / 0.7);
+  backdrop-filter: blur(2px);
+}
+
+/* Subtle, thin scrollbars that match the theme. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
