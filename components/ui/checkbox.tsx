@@ -8,19 +8,21 @@ interface CheckCircleProps {
   onChange: () => void;
   /** Accessible name, e.g. "Mark 'Call mom' complete". */
   label: string;
+  disabled?: boolean;
   className?: string;
 }
 
 /** Round completion checkbox built on a native input so it works with keyboard and screen readers. */
-export function CheckCircle({ checked, onChange, label, className }: CheckCircleProps) {
+export function CheckCircle({ checked, onChange, label, disabled, className }: CheckCircleProps) {
   return (
-    <label className={cn("relative inline-flex h-5 w-5 shrink-0 cursor-pointer", className)}>
+    <label className={cn("relative inline-flex h-5 w-5 shrink-0", disabled ? "cursor-wait opacity-60" : "cursor-pointer", className)}>
       <input
         type="checkbox"
         checked={checked}
         onChange={onChange}
+        disabled={disabled}
         aria-label={label}
-        className="peer absolute inset-0 cursor-pointer appearance-none rounded-full"
+        className="peer absolute inset-0 cursor-[inherit] appearance-none rounded-full"
       />
       <span
         aria-hidden="true"

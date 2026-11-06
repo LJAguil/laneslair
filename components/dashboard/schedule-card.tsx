@@ -15,7 +15,7 @@ const kindColor: Record<ScheduleItem["kind"], string> = {
 };
 
 export function ScheduleCard() {
-  const { schedule } = useAppState();
+  const { schedule, today } = useAppState();
   const sorted = [...schedule].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const groups = Map.groupBy(sorted, (item) => item.startsAt.slice(0, 10));
 
@@ -25,7 +25,7 @@ export function ScheduleCard() {
       <div className="space-y-4">
         {[...groups.entries()].map(([date, items]) => (
           <div key={date}>
-            <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-subtle">{formatDueLabel(date)}</h3>
+            <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-subtle">{formatDueLabel(date, today)}</h3>
             <ol className="space-y-1">
               {items.map((item) => (
                 <li key={item.id} className="flex gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-raised/60">

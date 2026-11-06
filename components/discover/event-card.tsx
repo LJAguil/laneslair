@@ -3,8 +3,8 @@
 import { Bookmark, BookmarkCheck, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatDueLabel, formatTime } from "@/lib/dates";
-import { useAppActions } from "@/lib/store/app-store";
-import type { EventCategory, LocalEvent } from "@/lib/types";
+import { useAppActions, useAppState } from "@/lib/store/app-store";
+import type { EventCategory, ISODate, LocalEvent } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export const categoryLabel: Record<EventCategory, string> = {
@@ -37,11 +37,12 @@ export function SaveEventButton({ event, size = "md" }: { event: LocalEvent; siz
 }
 
 /** Date + time label, e.g. "Tomorrow · 8 PM". */
-export function eventWhen(event: LocalEvent) {
-  return `${formatDueLabel(event.startsAt.slice(0, 10))} · ${formatTime(event.startsAt)}`;
+export function eventWhen(event: LocalEvent, today: ISODate) {
+  return `${formatDueLabel(event.startsAt.slice(0, 10), today)} · ${formatTime(event.startsAt)}`;
 }
 
 export function EventCard({ event }: { event: LocalEvent }) {
+  const { today } = useAppState();
   return (
     <article className="flex flex-col rounded-2xl border border-line bg-panel p-5 transition-colors hover:border-line-strong">
       <div className="flex items-start justify-between gap-3">
@@ -49,7 +50,7 @@ export function EventCard({ event }: { event: LocalEvent }) {
         <SaveEventButton event={event} />
       </div>
       <h3 className="mt-3 text-[15px] font-semibold leading-snug">{event.title}</h3>
-      <p className="mt-1 text-sm font-medium text-accent-strong">{eventWhen(event)}</p>
+      <p className="mt-1 text-sm font-medium text-accent-strong">{eventWhen(event, today)}</p>
       <p className="mt-2 flex-1 text-sm text-muted">{event.description}</p>
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-3 text-xs text-subtle">
         <span className="inline-flex min-w-0 items-center gap-1.5">

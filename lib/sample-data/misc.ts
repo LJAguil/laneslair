@@ -1,5 +1,5 @@
-import { addDays, PROTOTYPE_TODAY as T } from "@/lib/dates";
-import type { AppNotification, Conversation, ScheduleItem, UserProfile } from "@/lib/types";
+import { addDays } from "@/lib/dates";
+import type { AppNotification, Conversation, ISODate, ScheduleItem, UserProfile } from "@/lib/types";
 
 export const sampleProfile: UserProfile = {
   name: "Lane",
@@ -7,24 +7,29 @@ export const sampleProfile: UserProfile = {
   timeZone: "America/Los_Angeles",
 };
 
-const at = (offset: number, time: string) => `${addDays(T, offset)}T${time}:00`;
+/** "YYYY-MM-DDTHH:mm:00" for a day offset from `T` (today). */
+const at = (T: ISODate, offset: number, time: string) => `${addDays(T, offset)}T${time}:00`;
 
-export const sampleSchedule: ScheduleItem[] = [
-  { id: "s1", title: "CS 171 lecture", startsAt: at(0, "10:00"), endsAt: at(0, "11:20"), location: "Hall B, Room 104", kind: "class" },
-  { id: "s2", title: "Study group — problem set 4", startsAt: at(0, "13:30"), endsAt: at(0, "15:00"), location: "Library, 3rd floor", kind: "meeting" },
-  { id: "s3", title: "Gym — leg day", startsAt: at(0, "17:30"), endsAt: at(0, "18:30"), kind: "personal" },
-  { id: "s4", title: "Dinner with Jordan", startsAt: at(0, "19:30"), endsAt: at(0, "21:00"), location: "Sora Ramen", kind: "personal" },
-  { id: "s5", title: "Advisor office hours", startsAt: at(1, "11:00"), endsAt: at(1, "11:30"), location: "Zoom", kind: "meeting" },
-  { id: "s6", title: "Thursday Night Jazz", startsAt: at(1, "20:00"), endsAt: at(1, "22:30"), location: "The Blue Room", kind: "event" },
-];
+export function sampleSchedule(T: ISODate): ScheduleItem[] {
+  return [
+    { id: "s1", title: "CS 171 lecture", startsAt: at(T, 0, "10:00"), endsAt: at(T, 0, "11:20"), location: "Hall B, Room 104", kind: "class" },
+    { id: "s2", title: "Study group — problem set 4", startsAt: at(T, 0, "13:30"), endsAt: at(T, 0, "15:00"), location: "Library, 3rd floor", kind: "meeting" },
+    { id: "s3", title: "Gym — leg day", startsAt: at(T, 0, "17:30"), endsAt: at(T, 0, "18:30"), kind: "personal" },
+    { id: "s4", title: "Dinner with Jordan", startsAt: at(T, 0, "19:30"), endsAt: at(T, 0, "21:00"), location: "Sora Ramen", kind: "personal" },
+    { id: "s5", title: "Advisor office hours", startsAt: at(T, 1, "11:00"), endsAt: at(T, 1, "11:30"), location: "Zoom", kind: "meeting" },
+    { id: "s6", title: "Thursday Night Jazz", startsAt: at(T, 1, "20:00"), endsAt: at(T, 1, "22:30"), location: "The Blue Room", kind: "event" },
+  ];
+}
 
-export const sampleNotifications: AppNotification[] = [
-  { id: "n1", kind: "reminder", title: "Due today", body: "Finish CS 171 problem set 4", createdAt: at(0, "08:00"), read: false, href: "/tasks" },
-  { id: "n2", kind: "reminder", title: "Overdue", body: "Renew car registration was due yesterday", createdAt: at(0, "08:00"), read: false, href: "/tasks" },
-  { id: "n3", kind: "habit", title: "Keep the streak alive", body: "Morning workout — 5 days in a row", createdAt: at(0, "07:30"), read: false, href: "/habits" },
-  { id: "n4", kind: "event", title: "Saved event tomorrow", body: "Thursday Night Jazz at 8 PM", createdAt: at(-1, "18:00"), read: true, href: "/discover" },
-  { id: "n5", kind: "project", title: "Milestone reached", body: "Internship search hit 19 applications", createdAt: at(-2, "15:10"), read: true, href: "/projects" },
-];
+export function sampleNotifications(T: ISODate): AppNotification[] {
+  return [
+    { id: "n1", kind: "reminder", title: "Due today", body: "Finish CS 171 problem set 4", createdAt: at(T, 0, "08:00"), read: false, href: "/tasks" },
+    { id: "n2", kind: "reminder", title: "Overdue", body: "Renew car registration was due yesterday", createdAt: at(T, 0, "08:00"), read: false, href: "/tasks" },
+    { id: "n3", kind: "habit", title: "Keep the streak alive", body: "Morning workout — 5 days in a row", createdAt: at(T, 0, "07:30"), read: false, href: "/habits" },
+    { id: "n4", kind: "event", title: "Saved event tomorrow", body: "Thursday Night Jazz at 8 PM", createdAt: at(T, -1, "18:00"), read: true, href: "/discover" },
+    { id: "n5", kind: "project", title: "Milestone reached", body: "Internship search hit 19 applications", createdAt: at(T, -2, "15:10"), read: true, href: "/projects" },
+  ];
+}
 
 export const sampleConversations: Conversation[] = [
   {

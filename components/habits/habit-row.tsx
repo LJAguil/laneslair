@@ -1,10 +1,10 @@
 "use client";
 
 import { Check, Flame } from "lucide-react";
-import { formatWeekday, lastNDays, PROTOTYPE_TODAY } from "@/lib/dates";
+import { formatWeekday, lastNDays } from "@/lib/dates";
 import { habitStreak, isCheckedIn } from "@/lib/selectors";
-import { useAppActions } from "@/lib/store/app-store";
-import type { Habit, HabitFrequency } from "@/lib/types";
+import { useAppActions, useAppState } from "@/lib/store/app-store";
+import type { Habit, HabitFrequency, ISODate } from "@/lib/types";
 import { accentClasses, cn, pluralize } from "@/lib/utils";
 
 const frequencyLabel: Record<HabitFrequency, string> = { daily: "Daily", weekdays: "Weekdays", weekly: "Weekly" };
@@ -12,8 +12,9 @@ const frequencyLabel: Record<HabitFrequency, string> = { daily: "Daily", weekday
 /** One habit with a check-in toggle, its streak, and (optionally) the last 7 days. */
 export function HabitRow({ habit, showWeek = false }: { habit: Habit; showWeek?: boolean }) {
   const { toggleHabitCheckIn } = useAppActions();
-  const checked = isCheckedIn(habit);
-  const streak = habitStreak(habit);
+  const { today } = useAppState();
+  const checked = isCheckedIn(habit, today);
+  const streak = habitStreak(habit, today);
   const accent = accentClasses[habit.color];
 
   return (
@@ -36,7 +37,7 @@ export function HabitRow({ habit, showWeek = false }: { habit: Habit; showWeek?:
         <p className="text-xs text-subtle">{frequencyLabel[habit.frequency]}</p>
       </div>
 
-      {showWeek && <WeekDots habit={habit} colorClass={accent.dot} />}
+      {showWeek && <WeekDots habit={habit} colorClass={accent.dot} today={today} />}
 
       <span
         className={cn("inline-flex w-14 items-center justify-end gap-1 text-sm tabular-nums", streak > 0 ? "text-warning" : "text-subtle")}
@@ -50,15 +51,15 @@ export function HabitRow({ habit, showWeek = false }: { habit: Habit; showWeek?:
   );
 }
 
-function WeekDots({ habit, colorClass }: { habit: Habit; colorClass: string }) {
-  const days = lastNDays(7);
+function WeekDots({ habit, colorClass, today }: { habit: Habit; colorClass: string; today: ISODate }) {
+  const days = lastNDays(7, today);
   return (
     <ol className="hidden items-center gap-1.5 sm:flex" aria-label={`${habit.name}, last 7 days`}>
       {days.map((d) => {
         const done = habit.checkIns.includes(d);
         return (
           <li key={d} className="flex flex-col items-center gap-1">
-            <span className={cn("h-5 w-5 rounded-md", done ? colorClass : "bg-raised", d === PROTOTYPE_TODAY && "ring-1 ring-line-strong ring-offset-1 ring-offset-panel")}>
+            <span className={cn("h-5 w-5 rounded-md", done ? colorClass : "bg-raised", d === today && "ring-1 ring-line-strong ring-offset-1 ring-offset-panel")}>
               <span className="sr-only">
                 {formatWeekday(d)}: {done ? "done" : "missed"}
               </span>

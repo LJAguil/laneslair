@@ -12,13 +12,15 @@ interface DialogProps {
   description?: string;
   children: ReactNode;
   className?: string;
+  /** When false, Escape, the backdrop and the close button are ignored (e.g. while saving). */
+  dismissible?: boolean;
 }
 
 /**
  * Modal dialog built on the native <dialog> element. The browser handles
  * focus trapping, Escape-to-close and returning focus to the trigger.
  */
-export function Dialog({ open, onClose, title, description, children, className }: DialogProps) {
+export function Dialog({ open, onClose, title, description, children, className, dismissible = true }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const descId = useId();
@@ -41,9 +43,13 @@ export function Dialog({ open, onClose, title, description, children, className 
       aria-labelledby={titleId}
       aria-describedby={description ? descId : undefined}
       onClose={onClose}
+      onCancel={(e) => {
+        // Escape key: keep the dialog open if it isn't dismissible right now.
+        if (!dismissible) e.preventDefault();
+      }}
       onClick={(e) => {
         // Clicking the backdrop (the dialog element itself, outside the panel) closes it.
-        if (e.target === e.currentTarget) onClose();
+        if (dismissible && e.target === e.currentTarget) onClose();
       }}
       className={cn(
         "m-auto w-[calc(100%-2rem)] max-w-lg rounded-2xl border border-line bg-panel p-0 text-fg shadow-2xl shadow-black/50",
@@ -57,7 +63,7 @@ export function Dialog({ open, onClose, title, description, children, className 
               <h2 id={titleId} className="text-lg font-semibold">{title}</h2>
               {description && <p id={descId} className="mt-1 text-sm text-muted">{description}</p>}
             </div>
-            <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close dialog">
+            <Button variant="ghost" size="icon-sm" onClick={onClose} disabled={!dismissible} aria-label="Close dialog">
               <X className="h-4 w-4" />
             </Button>
           </div>

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { EmptyState, PageHeader } from "@/components/page-header";
 import { Card, CardHeader } from "@/components/ui/card";
 import { FilterChips } from "@/components/ui/filter-chips";
-import { daysBetween, PROTOTYPE_TODAY } from "@/lib/dates";
+import { daysBetween } from "@/lib/dates";
 import { upcomingEvents } from "@/lib/selectors";
 import { useAppState } from "@/lib/store/app-store";
 import type { EventCategory } from "@/lib/types";
@@ -15,9 +15,9 @@ import { categoryLabel, EventCard, eventWhen } from "./event-card";
 type Filter = "all" | "saved" | EventCategory;
 
 export function DiscoverView() {
-  const { events } = useAppState();
+  const { events, today } = useAppState();
   const [filter, setFilter] = useState<Filter>("all");
-  const upcoming = upcomingEvents(events);
+  const upcoming = upcomingEvents(events, today);
 
   const matches = (f: Filter) =>
     upcoming.filter((e) => (f === "all" ? true : f === "saved" ? e.saved : e.category === f));
@@ -29,7 +29,7 @@ export function DiscoverView() {
     ...(Object.keys(categoryLabel) as EventCategory[]).map((c) => ({ value: c, label: categoryLabel[c], count: matches(c).length })),
   ];
 
-  const thisWeek = upcoming.filter((e) => daysBetween(PROTOTYPE_TODAY, e.startsAt.slice(0, 10)) < 7);
+  const thisWeek = upcoming.filter((e) => daysBetween(today, e.startsAt.slice(0, 10)) < 7);
   const saved = upcoming.filter((e) => e.saved);
 
   return (
@@ -81,7 +81,7 @@ export function DiscoverView() {
                     )}
                     {e.title}
                   </p>
-                  <p className="text-xs text-subtle">{eventWhen(e)} · {e.price}</p>
+                  <p className="text-xs text-subtle">{eventWhen(e, today)} · {e.price}</p>
                 </li>
               ))}
             </ul>

@@ -21,7 +21,7 @@ const TIME_ZONES = [
 export function SettingsView() {
   return (
     <>
-      <PageHeader title="Settings" description="Changes last for this browser session only — accounts arrive in a later phase." />
+      <PageHeader title="Settings" description="Changes last for this browser session only — saving them to your account comes in a later step." />
       <div className="mx-auto max-w-3xl space-y-5">
         <ProfileSection />
         <AppearanceSection />

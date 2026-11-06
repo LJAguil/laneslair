@@ -26,11 +26,11 @@ export function Badge({ tone = "neutral", children, className }: { tone?: Tone; 
   );
 }
 
-const priorityTone: Record<Priority, Tone> = { high: "danger", medium: "warning", low: "neutral" };
+const priorityTone: Record<Priority, Tone> = { urgent: "danger", high: "danger", medium: "warning", low: "neutral" };
 
 export function PriorityBadge({ priority }: { priority: Priority }) {
   return (
-    <Badge tone={priorityTone[priority]}>
+    <Badge tone={priorityTone[priority]} className={priority === "urgent" ? "font-semibold uppercase tracking-wide" : undefined}>
       <span className="sr-only">Priority: </span>
       {priority[0].toUpperCase() + priority.slice(1)}
     </Badge>

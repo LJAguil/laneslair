@@ -7,21 +7,23 @@ import { cn } from "@/lib/utils";
 
 interface Stat {
   label: string;
-  value: number;
+  value: number | null;
   icon: LucideIcon;
   iconClass: string;
 }
 
 /** Daily overview tiles: outstanding, due today, overdue, completed today. */
 export function OverviewStats() {
-  const { tasks } = useAppState();
-  const s = taskStats(tasks);
+  const { tasks, tasksStatus, today } = useAppState();
+  const s = taskStats(tasks, today);
+  // Show a dash, not a misleading 0, while tasks are loading or failed to load.
+  const v = (n: number) => (tasksStatus === "ready" ? n : null);
 
   const stats: Stat[] = [
-    { label: "Outstanding", value: s.outstanding, icon: ListTodo, iconClass: "text-accent-strong bg-accent-soft" },
-    { label: "Due today", value: s.dueToday, icon: CalendarCheck, iconClass: "text-warning bg-warning/10" },
-    { label: "Overdue", value: s.overdue, icon: AlertTriangle, iconClass: "text-danger bg-danger/10" },
-    { label: "Completed today", value: s.completedToday, icon: CheckCircle2, iconClass: "text-success bg-success/10" },
+    { label: "Outstanding", value: v(s.outstanding), icon: ListTodo, iconClass: "text-accent-strong bg-accent-soft" },
+    { label: "Due today", value: v(s.dueToday), icon: CalendarCheck, iconClass: "text-warning bg-warning/10" },
+    { label: "Overdue", value: v(s.overdue), icon: AlertTriangle, iconClass: "text-danger bg-danger/10" },
+    { label: "Completed today", value: v(s.completedToday), icon: CheckCircle2, iconClass: "text-success bg-success/10" },
   ];
 
   return (
@@ -34,7 +36,14 @@ export function OverviewStats() {
             </span>
             <div className="min-w-0">
               <dt className="truncate text-xs text-subtle">{label}</dt>
-              <dd className="text-xl font-semibold tabular-nums">{value}</dd>
+              <dd className="text-xl font-semibold tabular-nums">
+                {value ?? (
+                  <>
+                    <span aria-hidden="true" className="text-subtle">–</span>
+                    <span className="sr-only">{tasksStatus === "loading" ? "Loading" : "Unavailable"}</span>
+                  </>
+                )}
+              </dd>
             </div>
           </div>
         ))}

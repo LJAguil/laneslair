@@ -1,11 +1,13 @@
 "use client";
 
 import { parseISODate } from "@/lib/dates";
+import { useAppState } from "@/lib/store/app-store";
 import type { LocalEvent } from "@/lib/types";
 import { eventWhen, SaveEventButton } from "./event-card";
 
 /** Compact event list item with a date tile and save toggle. */
 export function EventRow({ event }: { event: LocalEvent }) {
+  const { today } = useAppState();
   const date = parseISODate(event.startsAt);
   return (
     <li className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
@@ -18,7 +20,7 @@ export function EventRow({ event }: { event: LocalEvent }) {
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{event.title}</p>
         <p className="truncate text-xs text-subtle">
-          {eventWhen(event)} · {event.neighborhood}
+          {eventWhen(event, today)} · {event.neighborhood}
         </p>
       </div>
       <SaveEventButton event={event} size="sm" />

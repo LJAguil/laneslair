@@ -3,26 +3,32 @@
 import { Plus } from "lucide-react";
 import { useShell } from "@/components/shell/shell-context";
 import { Button } from "@/components/ui/button";
-import { formatLongDate, PROTOTYPE_TODAY } from "@/lib/dates";
+import { formatLongDate } from "@/lib/dates";
 import { taskStats } from "@/lib/selectors";
 import { useAppState } from "@/lib/store/app-store";
 import { pluralize } from "@/lib/utils";
 
 export function WelcomeHeader() {
-  const { profile, tasks } = useAppState();
+  const { profile, tasks, tasksStatus, today } = useAppState();
   const { openQuickAdd } = useShell();
-  const stats = taskStats(tasks);
+  const stats = taskStats(tasks, today);
 
   return (
     <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <p className="text-sm text-subtle">
-          <time dateTime={PROTOTYPE_TODAY}>{formatLongDate(PROTOTYPE_TODAY)}</time>
+          <time dateTime={today}>{formatLongDate(today)}</time>
         </p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">Welcome back, {profile.name}</h1>
         <p className="mt-1 text-sm text-muted">
-          You have {pluralize(stats.dueToday, "task")} due today
-          {stats.overdue > 0 && ` and ${stats.overdue} overdue`}.
+          {tasksStatus === "loading" && "Loading your tasks…"}
+          {tasksStatus === "error" && "Your tasks couldn't be loaded right now."}
+          {tasksStatus === "ready" && (
+            <>
+              You have {pluralize(stats.dueToday, "task")} due today
+              {stats.overdue > 0 && ` and ${stats.overdue} overdue`}.
+            </>
+          )}
         </p>
       </div>
       <Button variant="primary" onClick={openQuickAdd} className="h-11 px-5 sm:self-auto">

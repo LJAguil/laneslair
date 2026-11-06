@@ -7,17 +7,24 @@ export type ISODate = string;
 /** ISO date-time string, e.g. "2026-10-14T09:30:00". */
 export type ISODateTime = string;
 
-export type Priority = "high" | "medium" | "low";
-export type TaskStatus = "todo" | "in_progress" | "done";
+export type Priority = "urgent" | "high" | "medium" | "low";
+export type TaskStatus = "todo" | "in_progress" | "done" | "cancelled";
 
+/**
+ * A task as the UI sees it. Stored in Supabase `public.tasks`; see
+ * lib/data/tasks.ts for the column mapping (e.g. `notes` ↔ `description`,
+ * `dueDate` ↔ `due_at`).
+ */
 export interface Task {
   id: string;
   title: string;
   notes?: string;
   priority: Priority;
   status: TaskStatus;
+  /** Local calendar day the task is due. */
   dueDate?: ISODate;
   projectId?: string;
+  /** Local date-time strings ("YYYY-MM-DDTHH:mm:ss"). */
   createdAt: ISODateTime;
   completedAt?: ISODateTime;
 }

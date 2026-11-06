@@ -11,10 +11,10 @@ import { GoalProgress } from "./goal-progress";
 import { HabitRow } from "./habit-row";
 
 export function HabitsView() {
-  const { habits, goals } = useAppState();
-  const doneToday = habits.filter((h) => isCheckedIn(h)).length;
+  const { habits, goals, today } = useAppState();
+  const doneToday = habits.filter((h) => isCheckedIn(h, today)).length;
   const best = habits.reduce<{ name: string; streak: number } | null>((acc, h) => {
-    const streak = habitStreak(h);
+    const streak = habitStreak(h, today);
     return !acc || streak > acc.streak ? { name: h.name, streak } : acc;
   }, null);
   const completion = habits.length ? Math.round((doneToday / habits.length) * 100) : 0;

@@ -7,41 +7,49 @@ import { useShell } from "@/components/shell/shell-context";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FilterChips } from "@/components/ui/filter-chips";
-import { filterTasks, isOverdue, sortTasks, type PriorityFilter, type StatusFilter, type TaskFilters } from "@/lib/selectors";
+import { filterTasks, isOpen, isOverdue, sortTasks, type PriorityFilter, type StatusFilter, type TaskFilters } from "@/lib/selectors";
 import { useAppState } from "@/lib/store/app-store";
 import { TaskList } from "./task-list";
 
 export function TasksView() {
-  const { tasks } = useAppState();
+  const { tasks, tasksStatus, today } = useAppState();
   const { openQuickAdd } = useShell();
   const [filters, setFilters] = useState<TaskFilters>({ status: "all", priority: "all", query: "" });
 
-  const visible = sortTasks(filterTasks(tasks, filters));
-  const count = (status: StatusFilter) => filterTasks(tasks, { ...filters, status }).length;
+  const visible = sortTasks(filterTasks(tasks, filters, today));
+  const count = (status: StatusFilter) => filterTasks(tasks, { ...filters, status }, today).length;
 
-  const statusOptions = [
+  const statusOptions: { value: StatusFilter; label: string; count: number }[] = [
     { value: "all", label: "All", count: count("all") },
     { value: "todo", label: "To do", count: count("todo") },
     { value: "in_progress", label: "In progress", count: count("in_progress") },
     { value: "overdue", label: "Overdue", count: count("overdue") },
     { value: "done", label: "Done", count: count("done") },
-  ] as const;
+  ];
+  // Only offered when the database actually has cancelled tasks.
+  if (tasks.some((t) => t.status === "cancelled")) {
+    statusOptions.push({ value: "cancelled", label: "Cancelled", count: count("cancelled") });
+  }
 
   const priorityOptions = [
     { value: "all", label: "Any priority" },
+    { value: "urgent", label: "Urgent" },
     { value: "high", label: "High" },
     { value: "medium", label: "Medium" },
     { value: "low", label: "Low" },
   ] as const;
 
   const hasFilters = filters.status !== "all" || filters.priority !== "all" || filters.query !== "";
-  const overdueCount = tasks.filter((t) => isOverdue(t)).length;
+  const overdueCount = tasks.filter((t) => isOverdue(t, today)).length;
+  const openCount = tasks.filter(isOpen).length;
 
   return (
     <>
       <PageHeader
         title="Tasks"
-        description={`${tasks.filter((t) => t.status !== "done").length} open · ${overdueCount} overdue`}
+        description={
+          tasksStatus === "ready" ? `${openCount} open · ${overdueCount} overdue` : tasksStatus === "loading" ? "Loading your tasks…" : "Tasks unavailable"
+        }
         actions={
           <Button variant="primary" onClick={openQuickAdd}>
             <Plus className="h-4 w-4" aria-hidden="true" />
@@ -85,7 +93,12 @@ export function TasksView() {
         <p className="sr-only" aria-live="polite">
           Showing {visible.length} tasks
         </p>
-        <TaskList tasks={visible} emptyTitle="No tasks match these filters" emptyDescription="Try a different status or priority." />
+        <TaskList
+          tasks={visible}
+          allowDelete
+          emptyTitle={tasks.length === 0 ? "No tasks yet" : "No tasks match these filters"}
+          emptyDescription={tasks.length === 0 ? "Use “New task” to add your first one." : "Try a different status or priority."}
+        />
       </Card>
     </>
   );

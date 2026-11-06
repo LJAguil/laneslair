@@ -1,8 +1,10 @@
 "use client";
 
-import { CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { TaskFormDialog } from "@/components/tasks/task-form-dialog";
+import { useAppActions, useAppState } from "@/lib/store/app-store";
+import { cn } from "@/lib/utils";
 import { MobileNav } from "./mobile-nav";
 import { SearchDialog } from "./search-dialog";
 import { ShellContext } from "./shell-context";
@@ -13,7 +15,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const { notice } = useAppState();
+  const { notify, dismissNotice } = useAppActions();
 
   const openQuickAdd = useCallback(() => setQuickAddOpen(true), []);
   const openSearch = useCallback(() => setSearchOpen(true), []);
@@ -31,11 +34,12 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Success toasts fade quickly; errors stay longer so they can be read.
   useEffect(() => {
-    if (!toast) return;
-    const timer = setTimeout(() => setToast(null), 3000);
+    if (!notice) return;
+    const timer = setTimeout(() => dismissNotice(notice.id), notice.kind === "error" ? 8000 : 3000);
     return () => clearTimeout(timer);
-  }, [toast]);
+  }, [notice, dismissNotice]);
 
   return (
     <ShellContext.Provider value={controls}>
@@ -56,14 +60,32 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
       <MobileNav />
 
-      <TaskFormDialog open={quickAddOpen} onClose={() => setQuickAddOpen(false)} onCreated={(title) => setToast(`Added “${title}”`)} />
+      <TaskFormDialog open={quickAddOpen} onClose={() => setQuickAddOpen(false)} onCreated={(title) => notify("success", `Added “${title}”`)} />
       <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
 
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex justify-center px-4 lg:bottom-6">
-        {toast && (
-          <div className="flex items-center gap-2 rounded-xl border border-line bg-raised px-4 py-2.5 text-sm text-fg shadow-xl shadow-black/40">
-            <CheckCircle2 className="h-4 w-4 text-success" aria-hidden="true" />
-            {toast}
+        {notice && (
+          <div
+            role={notice.kind === "error" ? "alert" : "status"}
+            className={cn(
+              "pointer-events-auto flex max-w-md items-center gap-2 rounded-xl border bg-raised py-2 pl-4 pr-2 text-sm text-fg shadow-xl shadow-black/40",
+              notice.kind === "error" ? "border-danger/40" : "border-line",
+            )}
+          >
+            {notice.kind === "error" ? (
+              <AlertCircle className="h-4 w-4 shrink-0 text-danger" aria-hidden="true" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-success" aria-hidden="true" />
+            )}
+            <span className="py-0.5">{notice.message}</span>
+            <button
+              type="button"
+              onClick={() => dismissNotice(notice.id)}
+              aria-label="Dismiss message"
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-subtle hover:bg-hover hover:text-fg"
+            >
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
           </div>
         )}
       </div>

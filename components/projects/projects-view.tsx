@@ -24,7 +24,7 @@ export function ProjectsView() {
 
   return (
     <>
-      <PageHeader title="Projects" description="Progress is calculated from each project's tasks." />
+      <PageHeader title="Projects" description="Sample projects for now. Progress will come from linked tasks once projects are saved to your account." />
       <div className="mb-4">
         <FilterChips<Filter> label="Filter by status" options={options} value={filter} onChange={setFilter} />
       </div>

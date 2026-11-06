@@ -17,7 +17,7 @@ const kindIcon: Record<NotificationKind, LucideIcon> = {
 };
 
 export function NotificationCenter() {
-  const { notifications } = useAppState();
+  const { notifications, today } = useAppState();
   const { markNotificationRead, markAllNotificationsRead } = useAppActions();
   const unread = notifications.filter((n) => !n.read).length;
 
@@ -67,7 +67,7 @@ export function NotificationCenter() {
                     </span>
                     <span className="block text-sm text-subtle">{n.body}</span>
                     <span className="mt-0.5 block text-xs text-subtle">
-                      {formatDueLabel(n.createdAt.slice(0, 10))} · {formatTime(n.createdAt)}
+                      {formatDueLabel(n.createdAt.slice(0, 10), today)} · {formatTime(n.createdAt)}
                     </span>
                   </span>
                 </>

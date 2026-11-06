@@ -25,8 +25,8 @@ function ViewAll({ href, label }: { href: string; label: string }) {
 }
 
 export function PriorityTasksCard() {
-  const { tasks } = useAppState();
-  const list = priorityTasks(tasks).slice(0, 7);
+  const { tasks, today } = useAppState();
+  const list = priorityTasks(tasks, today).slice(0, 7);
   return (
     <Card>
       <CardHeader
@@ -35,7 +35,7 @@ export function PriorityTasksCard() {
         icon={<ListChecks className="h-[18px] w-[18px]" />}
         action={<ViewAll href="/tasks" label="View all tasks" />}
       />
-      <TaskList tasks={list} compact emptyTitle="You're all caught up" />
+      <TaskList tasks={list} compact emptyTitle="You're all caught up" emptyDescription="Nothing overdue or due in the next 3 days." />
     </Card>
   );
 }
@@ -60,8 +60,8 @@ export function ProjectsCard() {
 }
 
 export function HabitsCard() {
-  const { habits } = useAppState();
-  const done = habits.filter((h) => isCheckedIn(h)).length;
+  const { habits, today } = useAppState();
+  const done = habits.filter((h) => isCheckedIn(h, today)).length;
   return (
     <Card>
       <CardHeader
@@ -98,8 +98,8 @@ export function GoalsCard() {
 }
 
 export function EventsCard() {
-  const { events } = useAppState();
-  const list = upcomingEvents(events).slice(0, 4);
+  const { events, today } = useAppState();
+  const list = upcomingEvents(events, today).slice(0, 4);
   return (
     <Card>
       <CardHeader

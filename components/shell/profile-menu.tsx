@@ -2,6 +2,8 @@
 
 import { Bell, Globe, Palette, User } from "lucide-react";
 import Link from "next/link";
+import { SignOutButton } from "@/components/auth/sign-out-button";
+import { useSignedInEmail } from "@/components/auth/use-signed-in-email";
 import { Popover } from "@/components/ui/popover";
 import { useAppState } from "@/lib/store/app-store";
 
@@ -14,6 +16,7 @@ const links = [
 
 export function ProfileMenu() {
   const { profile } = useAppState();
+  const signedInEmail = useSignedInEmail();
   const initial = profile.name.charAt(0).toUpperCase();
 
   return (
@@ -47,7 +50,10 @@ export function ProfileMenu() {
               </li>
             ))}
           </ul>
-          <p className="border-t border-line px-4 py-2.5 text-xs text-subtle">Prototype · sign-in coming in a later phase</p>
+          <div className="border-t border-line p-1.5">
+            {signedInEmail && <p className="truncate px-2.5 pb-1 pt-1.5 text-xs text-subtle">Signed in as {signedInEmail}</p>}
+            <SignOutButton />
+          </div>
         </div>
       )}
     </Popover>

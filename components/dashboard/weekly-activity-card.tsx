@@ -3,7 +3,7 @@
 import { Activity } from "lucide-react";
 import { useState } from "react";
 import { Card, CardHeader } from "@/components/ui/card";
-import { formatShortDate, formatWeekday, PROTOTYPE_TODAY } from "@/lib/dates";
+import { formatShortDate, formatWeekday } from "@/lib/dates";
 import { weeklyActivity, type ActivityDay } from "@/lib/selectors";
 import { useAppState } from "@/lib/store/app-store";
 import { cn } from "@/lib/utils";
@@ -17,9 +17,9 @@ const SERIES = [
 const CHART_HEIGHT = 128;
 
 export function WeeklyActivityCard() {
-  const { tasks, habits } = useAppState();
+  const { tasks, habits, today } = useAppState();
   const [view, setView] = useState<"chart" | "table">("chart");
-  const days = weeklyActivity(tasks, habits);
+  const days = weeklyActivity(tasks, habits, today);
   const max = Math.max(1, ...days.flatMap((d) => [d.tasksCompleted, d.habitCheckIns]));
   const totals = {
     tasks: days.reduce((n, d) => n + d.tasksCompleted, 0),
@@ -54,7 +54,7 @@ export function WeeklyActivityCard() {
           <div className="absolute inset-x-0 border-t border-line" style={{ top: CHART_HEIGHT }} aria-hidden="true" />
           <ol className="relative grid h-full grid-cols-7 gap-1" aria-label="Activity by day">
             {days.map((d) => (
-              <DayColumn key={d.date} day={d} max={max} />
+              <DayColumn key={d.date} day={d} max={max} isToday={d.date === today} />
             ))}
           </ol>
         </div>
@@ -94,8 +94,7 @@ function Total({ label, value, color }: { label: string; value: number; color: s
   );
 }
 
-function DayColumn({ day, max }: { day: ActivityDay; max: number }) {
-  const isToday = day.date === PROTOTYPE_TODAY;
+function DayColumn({ day, max, isToday }: { day: ActivityDay; max: number; isToday: boolean }) {
   const summary = `${formatWeekday(day.date)} ${formatShortDate(day.date)}: ${day.tasksCompleted} tasks completed, ${day.habitCheckIns} habit check-ins`;
 
   return (

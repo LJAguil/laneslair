@@ -24,13 +24,19 @@ export function ProjectCard({ project, progress, compact }: ProjectCardProps) {
         <ProjectStatusBadge status={project.status} />
       </div>
       {!compact && <p className="mt-2 text-sm text-muted">{project.description}</p>}
-      <div className={cn("flex items-center justify-between text-xs text-subtle", compact ? "mt-3" : "mt-4")}>
-        <span>
-          {progress.done}/{progress.total} tasks
-        </span>
-        <span className="font-medium text-fg tabular-nums">{progress.percent}%</span>
-      </div>
-      <ProgressBar value={progress.percent} label={`${project.name} progress`} barClassName={accent.bar} className="mt-2" />
+      {progress.total === 0 ? (
+        <p className={cn("text-xs text-subtle", compact ? "mt-3" : "mt-4")}>No tasks linked yet</p>
+      ) : (
+        <>
+          <div className={cn("flex items-center justify-between text-xs text-subtle", compact ? "mt-3" : "mt-4")}>
+            <span>
+              {progress.done}/{progress.total} tasks
+            </span>
+            <span className="font-medium text-fg tabular-nums">{progress.percent}%</span>
+          </div>
+          <ProgressBar value={progress.percent} label={`${project.name} progress`} barClassName={accent.bar} className="mt-2" />
+        </>
+      )}
       {!compact && (
         <p className="mt-4 inline-flex items-center gap-1.5 text-xs text-subtle">
           <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
