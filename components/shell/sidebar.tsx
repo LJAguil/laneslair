@@ -39,11 +39,11 @@ export function Sidebar({ collapsed, onToggleCollapsed, onQuickAdd }: SidebarPro
           size={collapsed ? "icon" : "md"}
           className={cn(!collapsed && "w-full")}
           onClick={onQuickAdd}
-          aria-label={collapsed ? "Quick add task" : undefined}
+          aria-label={collapsed ? "Quick capture" : undefined}
           title={collapsed ? "Quick add task" : undefined}
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
-          {!collapsed && "Quick add"}
+          {!collapsed && "Quick capture"}
         </Button>
       </div>
 

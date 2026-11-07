@@ -10,7 +10,7 @@ import { pluralize } from "@/lib/utils";
 
 export function WelcomeHeader() {
   const { profile, tasks, tasksStatus, today } = useAppState();
-  const { openQuickAdd } = useShell();
+  const { openNewTask } = useShell();
   const stats = taskStats(tasks, today);
 
   return (
@@ -31,7 +31,7 @@ export function WelcomeHeader() {
           )}
         </p>
       </div>
-      <Button variant="primary" onClick={openQuickAdd} className="h-11 px-5 sm:self-auto">
+      <Button variant="primary" onClick={openNewTask} className="h-11 px-5 sm:self-auto">
         <Plus className="h-4 w-4" aria-hidden="true" />
         Quick add task
       </Button>

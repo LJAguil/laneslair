@@ -1,43 +1,36 @@
 # Next steps
 
-Direction: personal use, dependable tasks and projects first, mobile access soon. Task creation is reported working. Use the README manual checklist to confirm editing and refresh persistence before saving a development milestone.
+Lane's Lair is for personal use, with iPhone access first. Its daily loop is Capture → Choose → Check in → Play.
 
-## 1. Save the current baseline
+## Current baseline
 
-- Run the short manual checklist in the README.
-- For any failure, record the action, expected result, actual result, and error text. Exclude passwords, tokens, and environment values.
-- Review the pending authentication/task changes and save a Git checkpoint when ready. This documentation work does not commit or push anything.
+- Authentication and task persistence were saved and pushed in checkpoint `d450d51`.
+- Projects and task-project linking are implemented locally, and the owner reports that manual tests worked. Those changes remain part of the pending working tree.
+- The new milestone adds Inbox capture, atomic task conversion, a simpler Today page with daily focus, an Overview page for the original widgets, and iPhone installation assets.
+- The Inbox/focus migration has not been run against Supabase. No deployment, commit, or push was performed for this milestone.
 
-## 2. Review the existing project schema
+## Immediate owner actions
 
-Before implementing projects, obtain the definition of `public.projects` from Supabase, including:
+1. Review the new SQL and follow [DAILY_USE_SETUP.md](DAILY_USE_SETUP.md) to apply it once to the correct project.
+2. Sign in locally and verify capture, editing, archive/restore, conversion, daily focus, refresh persistence, and failed-save recovery.
+3. Review and approve a Git checkpoint of the projects and daily-use milestone after those checks.
+4. Choose and approve an HTTPS deployment; test Home Screen installation and keyboard behaviour on the physical iPhone.
 
-Open your project in the Supabase dashboard, open **SQL Editor**, and start a new query. Paste the contents of [inspect-projects.sql](inspect-projects.sql), then run it. Copy the entire `schema_report` result cell and share it for review. The query reads only metadata, including RLS policies and constraints; it does not read your project records or change anything. Review custom trigger function definitions for sensitive hard-coded values before sharing.
+Use the manual checklist in the setup guide. Share error text when a step fails, without credentials or private row contents. Keep the original database setup SQL if you find it; this repository contains only the new migration and the read-only projects inspection query, not the original seven-table setup.
 
-- Column names, types, defaults, and nullability.
-- Status enum values or CHECK constraints.
-- Primary/unique keys and foreign keys, especially `(id, user_id)` referenced by tasks.
-- RLS enabled status and policy definitions: roles, commands, USING and WITH CHECK conditions.
-- Triggers affecting ownership, inserts, updates, or timestamps.
+## Follow-on milestones
 
-Share schema definitions only, without credentials or row contents. Existing SQL can be reviewed without executing it. The original setup SQL is not in this checkout yet.
+1. Persist water intake and let the owner choose a daily target.
+2. Add optional task/water push reminders, server-side scheduling, quiet hours, and physical-iPhone delivery testing. Resolve task date/time-zone semantics first.
+3. Add selectable themes inspired by the owner's interests, preserving readable controls and layouts.
+4. Add an original daily guessing puzzle, then chess puzzles.
+5. Add interest-based news with source attribution and spoiler controls.
+6. Revisit a dedicated mobile app based on actual limitations of the installed website.
 
-## 3. Implement persistent projects
+Do not add dummy puzzle, water, news, or notification controls to Today in advance of working implementations.
 
-1. Add typed project queries and explicit mapping to the current UI model.
-2. Load real projects with separate loading, empty, and error states.
-3. Add creation and editing. Decide how archive/delete should handle linked tasks before implementing it.
-4. Enable task-project selection with real UUIDs belonging to the signed-in user.
-5. Verify task progress/counts, refresh persistence, failed saves, and ownership protections.
+## Existing schema considerations
 
-Do not seed sample projects or change database definitions without reviewing the need first.
+The reviewed projects schema permits Active, Paused, Completed, and Archived. Archiving retains tasks, and the existing composite foreign key requires task/project ownership to match. The inspected grants included TRUNCATE for anon and authenticated roles; review that separately. This feature work changes no existing table definitions, grants, or policies.
 
-## 4. Bring it to the phone
-
-Start with an authenticated HTTPS deployment of the responsive website. Check task capture and project navigation on your phone. Then decide whether an installable web app meets near-term needs or a dedicated mobile app should start, using the same Supabase backend.
-
-Before adding reminders, decide whether a due date means a calendar day or a precise time, and which time zone governs it. The current local-noon workaround is not a complete reminder strategy.
-
-## Verification record
-
-During the October 29, 2026 status review, 17 automated tests passed, and lint, production build, and TypeScript checks passed. They did not verify live sign-in or write to Supabase. Run checks again after code changes; this record is not a guarantee about later changes.
+Automated data-access tests use simulated clients. The new Inbox migration is additionally tested in disposable local PostgreSQL for ownership, rollback, and repeat conversion. Those tests do not verify the live Supabase project, multi-device behaviour, or physical-iPhone installation and delivery.

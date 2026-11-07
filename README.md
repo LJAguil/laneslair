@@ -8,7 +8,9 @@ A personal command center for tasks, projects, habits, goals, events, and an AI 
 | --- | --- |
 | Authentication | Supabase email/password login, protected routes, sign-out; no public signup UI |
 | Tasks | Persistent creation, editing, completion/reopening, deletion, filters, and save errors |
-| Projects | Sample data; task-project linking disabled until real projects are integrated |
+| Inbox | Text capture, editing, archive/restore, and atomic task conversion (new migration required) |
+| Today | Quick capture, persisted daily focus, and a short task radar (new migration required for focus) |
+| Projects | Supabase creation/editing, Active/Paused/Completed/Archived statuses, task links and progress |
 | Habits and goals | Interactive sample data; changes reset on full refresh |
 | Events, schedule, notifications | Sample data; changes reset on full refresh |
 | AI assistant | Simulated replies; no model connection |
@@ -41,11 +43,15 @@ Restart the development server after changing these values. Public environment v
 
 ### Supabase database and account
 
-This checkout expects an existing Supabase project. The original database setup SQL and migrations are **not included**, so cloning the repository cannot recreate the database by itself. Do not guess a replacement schema or seed sample tasks.
+This checkout expects an existing Supabase project. The original database setup SQL is **not included**, so cloning the repository cannot recreate the database by itself. Do not guess a replacement schema or seed sample tasks.
 
-The existing project reportedly contains `profiles`, `projects`, `tasks`, `habits`, `habit_logs`, `goals`, and `notifications` in `public`. Currently only `tasks` is queried by the app. Its RLS policies must enforce ownership with `auth.uid() = user_id`. Its description column is `text not null default ''`; missing or whitespace-only notes are stored as an empty string.
+The existing project reportedly contains `profiles`, `projects`, `tasks`, `habits`, `habit_logs`, `goals`, and `notifications` in `public`. The app queries `tasks` and `projects`, plus `inbox_notes` and `daily_focus` after the new migration is applied. Its RLS policies must enforce ownership with `auth.uid() = user_id`. Its description column is `text not null default ''`; missing or whitespace-only notes are stored as an empty string.
 
 Sign in using your existing Supabase Auth account. For a new installation, the owner must create and confirm an email/password account through the Supabase dashboard. There is no signup page. For personal use, also disable public signup in Supabase Auth settings; hiding signup in the UI does not disable the signup API.
+
+### Inbox and Today database setup
+
+Review [the daily-use setup guide](docs/DAILY_USE_SETUP.md) and its proposed migration before using Inbox and persisted focus. The migration adds two tables and one atomic conversion function; it has not been applied to your remote project automatically. Until then, the app shows explicit setup errors for those features, while tasks and projects remain usable.
 
 ### Start the app
 
@@ -66,7 +72,7 @@ npm run build
 npx tsc --noEmit
 ```
 
-Tests use a simulated Supabase client. They do not contact your database or verify live sign-in, persistence, or RLS. Use `npm run test:watch` to rerun them as files change. A successful build verifies compilation, not database access.
+Data-access tests use a simulated Supabase client. Additional tests execute the new Inbox/focus migration and ownership policies in disposable in-memory PostgreSQL using PGlite. They do not contact your database or verify live sign-in, live persistence, or your actual Supabase policies. Use `npm run test:watch` to rerun them as files change. A successful build verifies compilation, not database access.
 
 To try production mode locally, stop the development server, run `npm run build`, then `npm run start`.
 
@@ -81,6 +87,18 @@ To try production mode locally, stop the development server, run `npm run build`
 7. Sign out and open `/tasks`; it should return you to login.
 
 Use disposable tasks for deletion checks. Sample features resetting on refresh is expected.
+
+## Project and task-link checks
+
+1. Open Projects and create a project with a name, empty description, and an optional due date. Refresh and confirm it persists.
+2. Edit its name, description, date, and status; clear the optional values and refresh again.
+3. Create a task with that project selected. Edit an existing task to assign it, move it to another project, or choose No project. Refresh after each change.
+4. Complete linked tasks and verify project progress updates. Cancelled tasks do not count toward progress.
+5. Edit the project and set its status to Archived. Existing links must remain; archived projects must not be offered for new links. Use the Archived filter and set it back to Active to restore it.
+6. Go offline before saving a project. Its form must keep your input and show an error. Restore connectivity and retry.
+7. A project-load failure must show an error and retry control on Projects and the dashboard. Task forms must preserve existing links while the project selector is unavailable.
+
+Project deletion is not exposed: use Archived to retain tasks. Project colors are derived from UUIDs for display only; there is no color column in the database. Project due dates are plain calendar dates, with no timezone conversion. Other prototype features still reset on refresh.
 
 ## Troubleshooting
 
@@ -103,8 +121,10 @@ Do not share passwords, tokens, or environment values when reporting errors.
 | `app/login/` | Login page |
 | `components/tasks/` | Task list and shared create/edit form |
 | `components/shell/`, `components/ui/` | Navigation and reusable controls |
-| `lib/data/tasks.ts` | Task database queries and explicit database-to-UI mapping |
-| `lib/store/app-store.tsx` | React context/reducer; task actions and sample feature state |
+| `lib/data/` | Owned task/project/capture/focus queries and explicit database-to-UI mapping |
+| `lib/store/inbox-state.ts` | Capture/focus state and reliable async actions |
+| `database/migrations/` | Reviewed new migrations; original database setup is still missing |
+| `lib/store/app-store.tsx` | React context/reducer; task/project actions and sample feature state |
 | `lib/supabase/`, `lib/auth/` | Supabase clients, session refresh, login/logout actions |
 | `lib/sample-data/` | Sample features other than tasks |
 | `lib/types.ts`, `lib/selectors.ts`, `lib/dates.ts` | Domain models, calculations, date conversions |
@@ -119,8 +139,8 @@ Before modifying Next.js behaviour, follow `AGENTS.md` and read the relevant ins
 - Concurrent edits in multiple tabs have no conflict detection or realtime synchronization.
 - Automated tests cover task data handling, with no browser coverage yet.
 - Database setup definitions still need a reviewed, credential-free record in version control.
-- Next: verify tasks, save a Git checkpoint, persist projects and enable task linking, then improve mobile access. Habits, goals, reminders, and real event/AI services follow.
+- Next: apply the reviewed Inbox/focus migration, manually verify captures and conversion, then approve an HTTPS deployment and test iPhone installation. Water tracking, notifications, themes, puzzles, and news follow.
 
 Hosting requires support for the Next.js server because authentication uses Proxy and Server Actions; static file hosting alone is insufficient. Set both public environment variables on the host before building. No deployment was verified during documentation work.
 
-See [the next-steps checklist](docs/NEXT_STEPS.md) for the next development handoff.
+See [the daily-use setup guide](docs/DAILY_USE_SETUP.md) for database setup, deployment, and iPhone tests, and [the next-steps checklist](docs/NEXT_STEPS.md) for the development handoff. No offline support or push notifications are implemented yet.

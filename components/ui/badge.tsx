@@ -38,9 +38,9 @@ export function PriorityBadge({ priority }: { priority: Priority }) {
 }
 
 const statusMeta: Record<ProjectStatus, { label: string; tone: Tone }> = {
-  planning: { label: "Planning", tone: "neutral" },
+  archived: { label: "Archived", tone: "neutral" },
   active: { label: "Active", tone: "accent" },
-  on_hold: { label: "On hold", tone: "warning" },
+  paused: { label: "Paused", tone: "warning" },
   completed: { label: "Completed", tone: "success" },
 };
 

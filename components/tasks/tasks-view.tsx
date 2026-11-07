@@ -13,7 +13,7 @@ import { TaskList } from "./task-list";
 
 export function TasksView() {
   const { tasks, tasksStatus, today } = useAppState();
-  const { openQuickAdd } = useShell();
+  const { openNewTask } = useShell();
   const [filters, setFilters] = useState<TaskFilters>({ status: "all", priority: "all", query: "" });
 
   const visible = sortTasks(filterTasks(tasks, filters, today));
@@ -51,7 +51,7 @@ export function TasksView() {
           tasksStatus === "ready" ? `${openCount} open · ${overdueCount} overdue` : tasksStatus === "loading" ? "Loading your tasks…" : "Tasks unavailable"
         }
         actions={
-          <Button variant="primary" onClick={openQuickAdd}>
+          <Button variant="primary" onClick={openNewTask}>
             <Plus className="h-4 w-4" aria-hidden="true" />
             New task
           </Button>

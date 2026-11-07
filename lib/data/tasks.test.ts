@@ -41,7 +41,7 @@ vi.mock("@/lib/supabase/client", () => ({
   }),
 }));
 
-const { buildTaskInsert, buildTaskUpdate, createTask, normalizeNotes, rowToTask, TaskDataError, updateTask } = await import("./tasks");
+const { buildTaskInsert, buildTaskUpdate, createTask, normalizeNotes, rowToTask, TaskDataError, updateTask, describeTaskError } = await import("./tasks");
 
 const USER = "11111111-1111-4111-8111-111111111111";
 const TASK_ID = "22222222-2222-4222-8222-222222222222";
@@ -112,10 +112,14 @@ describe("creating tasks", () => {
     expect(buildTaskInsert(USER, { title: "x", priority: "low", notes: "   " }).description).toBe("");
   });
 
-  it("uses the verified user id, defaults status to todo, and never sends project_id", () => {
-    const insert = buildTaskInsert(USER, { title: "  Trim me  ", priority: "high", projectId: "p1" });
-    expect(insert).toMatchObject({ user_id: USER, title: "Trim me", status: "todo", priority: "high" });
-    expect(insert).not.toHaveProperty("project_id");
+  it("sets the verified owner and leaves unassigned tasks without a project", () => {
+    const insert = buildTaskInsert(USER, { title: "  Trim me  ", priority: "high" });
+    expect(insert).toMatchObject({ user_id: USER, title: "Trim me", status: "todo", priority: "high", project_id: null });
+  });
+
+  it("rejects sample project IDs and accepts real UUID links", () => {
+    expect(() => buildTaskInsert(USER, { title: "x", priority: "low", projectId: "p1" })).toThrow(/Choose a project/);
+    expect(buildTaskInsert(USER, { title: "x", priority: "low", projectId: USER }).project_id).toBe(USER);
   });
 
   it("stores no due date as null and a due date as local noon on the same day", () => {
@@ -197,5 +201,40 @@ describe("editing tasks", () => {
   it("reports a clear error when the task no longer exists", async () => {
     nextResult = { data: null, error: { code: "PGRST116", message: "0 rows" } };
     await expect(updateTask(USER, baseTask, { ...baseTask, title: "x" })).rejects.toThrow(/no longer exists/);
+  });
+});
+
+
+describe("task-project linking", () => {
+  it("creates a linked task and maps the saved link back into the store model", async () => {
+    nextResult = { data: dbRow({ project_id: USER }), error: null };
+    const task = await createTask(USER, { title: "Linked", priority: "low", projectId: USER });
+    expect(callsOf("insert")[0].args[0]).toMatchObject({ project_id: USER, user_id: USER });
+    expect(task.projectId).toBe(USER);
+  });
+
+  it("reassigns and explicitly clears links without affecting task completion", () => {
+    const linked = { ...baseTask, projectId: USER, status: "done" as const, completedAt: "2026-11-06T12:00:00" };
+    const moved = buildTaskUpdate(linked, { ...linked, projectId: TASK_ID });
+    expect(moved.project_id).toBe(TASK_ID);
+    expect(moved).not.toHaveProperty("completed_at");
+    expect(buildTaskUpdate(linked, { ...linked, projectId: undefined }).project_id).toBeNull();
+    expect(buildTaskUpdate(linked, { title: linked.title, notes: linked.notes, priority: linked.priority, dueDate: linked.dueDate, status: linked.status })).not.toHaveProperty("project_id");
+  });
+
+  it("saves project reassignment on the existing owned row", async () => {
+    nextResult = { data: dbRow({ project_id: USER }), error: null };
+    const saved = await updateTask(USER, baseTask, { ...baseTask, projectId: USER });
+    expect(callsOf("update")[0].args[0]).toMatchObject({ project_id: USER });
+    expect(callsOf("eq").map((c) => c.args)).toEqual([["id", TASK_ID], ["user_id", USER]]);
+    expect(callsOf("insert")).toHaveLength(0);
+    expect(saved.projectId).toBe(USER);
+  });
+
+  it("explains a missing or other-owner project and rejects the failed save", async () => {
+    const error = { code: "23503", message: "foreign key violation" };
+    nextResult = { data: null, error };
+    await expect(updateTask(USER, baseTask, { ...baseTask, projectId: USER })).rejects.toThrow(/selected project/);
+    expect(describeTaskError("save the task", error)).toMatch(/account/);
   });
 });

@@ -29,7 +29,7 @@ export interface Task {
   completedAt?: ISODateTime;
 }
 
-export type ProjectStatus = "planning" | "active" | "on_hold" | "completed";
+export type ProjectStatus = "active" | "paused" | "completed" | "archived";
 
 export interface Project {
   id: string;
@@ -121,3 +121,19 @@ export interface UserProfile {
 /** Input used when creating a task from a form. */
 export type NewTaskInput = Pick<Task, "title" | "priority"> &
   Partial<Pick<Task, "dueDate" | "projectId" | "notes">>;
+
+/** Captures retain their original text independently of any resulting task. */
+export interface InboxNote {
+  id: string;
+  body: string;
+  archivedAt?: ISODateTime;
+  convertedTaskId?: string;
+  convertedAt?: ISODateTime;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+
+export interface DailyFocus {
+  taskId: string | null;
+  date: ISODate;
+}

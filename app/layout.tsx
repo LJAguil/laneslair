@@ -17,12 +17,18 @@ export const metadata: Metadata = {
     default: "Lane's Lair",
     template: "%s · Lane's Lair",
   },
-  description: "Your personal command center for tasks, projects, habits, goals, and local events.",
+  description: "Capture a thought. Choose your next move.",
+  applicationName: "Lane's Lair",
+  appleWebApp: { capable: true, title: "Lane's Lair", statusBarStyle: "black-translucent" },
+  icons: { icon: "/icon-192.png", apple: "/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {
   themeColor: "#111216",
   colorScheme: "dark",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -14,7 +14,7 @@ interface TopBarProps {
 
 export function TopBar({ onSearch, onQuickAdd }: TopBarProps) {
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-line bg-canvas/85 px-4 backdrop-blur sm:px-6 lg:px-8">
+    <header className="app-header sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-line bg-canvas/85 px-4 backdrop-blur sm:px-6 lg:px-8">
       <Link href="/" className="mr-1 flex items-center gap-2 rounded-lg lg:hidden" aria-label="Lane's Lair home">
         <LogoMark />
         <span className="hidden text-[15px] font-semibold tracking-tight sm:inline">Lane&apos;s Lair</span>
@@ -36,11 +36,11 @@ export function TopBar({ onSearch, onQuickAdd }: TopBarProps) {
         <span className="hidden sm:block lg:hidden">
           <Button variant="primary" onClick={onQuickAdd} size="sm">
             <Plus className="h-4 w-4" aria-hidden="true" />
-            Add
+            Capture
           </Button>
         </span>
         <span className="sm:hidden">
-          <Button variant="primary" size="icon-sm" onClick={onQuickAdd} aria-label="Quick add task">
+          <Button variant="primary" size="icon-sm" onClick={onQuickAdd} aria-label="Quick capture">
             <Plus className="h-4 w-4" aria-hidden="true" />
           </Button>
         </span>

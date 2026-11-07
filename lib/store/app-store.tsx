@@ -4,17 +4,19 @@
 // Every mutation goes through `actions`, so components never talk to the
 // database directly.
 //
-// Tasks are persisted in Supabase (lib/data/tasks.ts). Everything else
-// (projects, habits, goals, events, schedule, notifications, chats) is still
+// Tasks, projects, Inbox, and daily focus are persisted in Supabase. Everything else
+// (habits, goals, events, schedule, notifications, chats) is still
 // local sample data that resets on a full page reload.
 
 import { createContext, useContext, useEffect, useMemo, useReducer, useSyncExternalStore, type ReactNode } from "react";
+import { mergeTaskRead, type TaskWrite } from "./task-read";
+import { createInboxActions, initialInboxState, reduceInbox, type InboxAction, type InboxSlice } from "./inbox-state";
 import * as taskData from "@/lib/data/tasks";
 import { localToday, timestampToLocalDateTime } from "@/lib/dates";
 import { sampleEvents } from "@/lib/sample-data/events";
 import { sampleGoals, sampleHabits } from "@/lib/sample-data/habits-goals";
 import { sampleConversations, sampleNotifications, sampleProfile, sampleSchedule } from "@/lib/sample-data/misc";
-import { sampleProjects } from "@/lib/sample-data/projects";
+import * as projectData from "@/lib/data/projects";
 import type {
   AppNotification,
   ChatMessage,
@@ -38,7 +40,7 @@ export interface Notice {
   message: string;
 }
 
-export interface AppState {
+export interface AppState extends InboxSlice {
   /** The user's local calendar day, read once in the browser. */
   today: ISODate;
   tasks: Task[];
@@ -49,6 +51,9 @@ export interface AppState {
   /** Latest toast message (success or error). */
   notice: Notice | null;
   projects: Project[];
+  projectsStatus: LoadStatus;
+  projectsError: string | null;
+  pendingProjectIds: string[];
   habits: Habit[];
   goals: Goal[];
   events: LocalEvent[];
@@ -60,13 +65,17 @@ export interface AppState {
 
 function createInitialState(today: ISODate): AppState {
   return {
+    ...initialInboxState,
     today,
     tasks: [],
     tasksStatus: "loading",
     tasksError: null,
     pendingTaskIds: [],
     notice: null,
-    projects: sampleProjects(today),
+    projects: [],
+    projectsStatus: "loading",
+    projectsError: null,
+    pendingProjectIds: [],
     habits: sampleHabits(today),
     goals: sampleGoals(today),
     events: sampleEvents(today),
@@ -77,7 +86,12 @@ function createInitialState(today: ISODate): AppState {
   };
 }
 
-type Action =
+type Action = InboxAction
+  | { type: "projects/loading" }
+  | { type: "projects/loaded"; projects: Project[] }
+  | { type: "projects/failed"; message: string }
+  | { type: "project/saved"; project: Project }
+  | { type: "project/pending"; id: string; pending: boolean }
   | { type: "tasks/loading" }
   | { type: "tasks/loaded"; tasks: Task[] }
   | { type: "tasks/failed"; message: string }
@@ -97,6 +111,23 @@ type Action =
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
+    case "inbox/loading": case "inbox/loaded": case "inbox/failed": case "inbox/saved": case "inbox/pending":
+    case "focus/loading": case "focus/loaded": case "focus/failed": case "focus/saving":
+      return { ...state, ...reduceInbox(state, action) };
+    case "projects/loading":
+      return { ...state, projectsStatus: "loading", projectsError: null };
+    case "projects/loaded":
+      return { ...state, projects: action.projects, projectsStatus: "ready", projectsError: null };
+    case "projects/failed":
+      return { ...state, projectsStatus: "error", projectsError: action.message };
+    case "project/saved":
+      return { ...state, projects: state.projects.some((p) => p.id === action.project.id)
+        ? state.projects.map((p) => p.id === action.project.id ? action.project : p)
+        : [action.project, ...state.projects] };
+    case "project/pending":
+      return { ...state, pendingProjectIds: action.pending
+        ? [...state.pendingProjectIds, action.id]
+        : state.pendingProjectIds.filter((id) => id !== action.id) };
     case "tasks/loading":
       return { ...state, tasksStatus: "loading", tasksError: null };
     case "tasks/loaded":
@@ -108,7 +139,7 @@ function reducer(state: AppState, action: Action): AppState {
     case "task/replace":
       return { ...state, tasks: state.tasks.map((t) => (t.id === action.task.id ? action.task : t)) };
     case "task/remove":
-      return { ...state, tasks: state.tasks.filter((t) => t.id !== action.id) };
+      return { ...state, tasks: state.tasks.filter((t) => t.id !== action.id), focus: state.focus?.taskId === action.id ? { ...state.focus, taskId: null } : state.focus };
     case "task/pending":
       return {
         ...state,
@@ -166,6 +197,10 @@ const messageOf = (err: unknown) =>
 function createActions(dispatch: React.Dispatch<Action>, today: ISODate) {
   let noticeId = 0;
   let loadSeq = 0;
+  let taskRevision = 0;
+  const taskWrites = new Map<string, TaskWrite>();
+  let projectLoadSeq = 0;
+  const projectInFlight = new Set<string>();
   // Ids with a save in flight, tracked here too so a double-click can't race
   // ahead of the next render.
   const inFlight = new Set<string>();
@@ -184,7 +219,49 @@ function createActions(dispatch: React.Dispatch<Action>, today: ISODate) {
     }
   }
 
+  const recordTaskAction = (action: Extract<Action, { type: "task/add" | "task/replace" | "task/remove" }>) => {
+    const task = action.type === "task/remove" ? null : action.task;
+    const id = action.type === "task/remove" ? action.id : action.task.id;
+    taskWrites.set(id, { revision: ++taskRevision, task });
+    dispatch(action);
+  };
+
   return {
+    ...createInboxActions((action) => {
+      if (action.type === "task/add") recordTaskAction(action);
+      else dispatch(action);
+    }, notify),
+    async loadProjects({ showLoading = true }: { showLoading?: boolean } = {}) {
+      const seq = ++projectLoadSeq;
+      if (showLoading) dispatch({ type: "projects/loading" });
+      try {
+        const userId = await taskData.getVerifiedUserId();
+        const projects = await projectData.fetchProjects(userId);
+        if (seq === projectLoadSeq) dispatch({ type: "projects/loaded", projects });
+      } catch (err) {
+        if (seq === projectLoadSeq) dispatch({ type: "projects/failed", message: messageOf(err) });
+      }
+    },
+    async addProject(input: projectData.ProjectInput) {
+      const userId = await taskData.getVerifiedUserId();
+      const project = await projectData.createProject(userId, input);
+      dispatch({ type: "project/saved", project });
+      notify("success", `Created “${project.name}”`);
+    },
+    async editProject(project: Project, input: projectData.ProjectInput) {
+      if (projectInFlight.has(project.id)) throw new taskData.TaskDataError("This project is still saving. Try again in a moment.");
+      projectInFlight.add(project.id);
+      dispatch({ type: "project/pending", id: project.id, pending: true });
+      try {
+        const userId = await taskData.getVerifiedUserId();
+        const saved = await projectData.updateProject(userId, project.id, input);
+        dispatch({ type: "project/saved", project: saved });
+        notify("success", `Saved changes to “${saved.name}”`);
+      } finally {
+        projectInFlight.delete(project.id);
+        dispatch({ type: "project/pending", id: project.id, pending: false });
+      }
+    },
     /**
      * Loads the signed-in user's tasks. The session is verified first because
      * RLS returns an empty list (not an error) to a signed-out request, and an
@@ -192,11 +269,12 @@ function createActions(dispatch: React.Dispatch<Action>, today: ISODate) {
      */
     async loadTasks({ showLoading = true }: { showLoading?: boolean } = {}) {
       const seq = ++loadSeq;
+      const startedAt = taskRevision;
       if (showLoading) dispatch({ type: "tasks/loading" });
       try {
         await taskData.getVerifiedUserId();
         const tasks = await taskData.fetchTasks();
-        if (seq === loadSeq) dispatch({ type: "tasks/loaded", tasks });
+        if (seq === loadSeq) dispatch({ type: "tasks/loaded", tasks: mergeTaskRead(tasks, taskWrites, startedAt) });
       } catch (err) {
         if (seq === loadSeq) dispatch({ type: "tasks/failed", message: messageOf(err) });
       }
@@ -205,7 +283,7 @@ function createActions(dispatch: React.Dispatch<Action>, today: ISODate) {
     async addTask(input: NewTaskInput) {
       const userId = await taskData.getVerifiedUserId();
       const task = await taskData.createTask(userId, input);
-      dispatch({ type: "task/add", task });
+      recordTaskAction({ type: "task/add", task });
     },
     /**
      * Saves edits to an existing task (by its id — never creates a new one).
@@ -220,7 +298,7 @@ function createActions(dispatch: React.Dispatch<Action>, today: ISODate) {
       return withPending(task.id, async () => {
         const userId = await taskData.getVerifiedUserId();
         const saved = await taskData.updateTask(userId, task, changes);
-        dispatch({ type: "task/replace", task: saved });
+        recordTaskAction({ type: "task/replace", task: saved });
         notify("success", `Saved changes to “${saved.title}”`);
         return true;
       });
@@ -229,7 +307,7 @@ function createActions(dispatch: React.Dispatch<Action>, today: ISODate) {
     async toggleTask(task: Task) {
       if (inFlight.has(task.id)) return;
       const nextStatus = task.status === "done" ? "todo" : "done";
-      dispatch({
+      recordTaskAction({
         type: "task/replace",
         task: {
           ...task,
@@ -240,9 +318,9 @@ function createActions(dispatch: React.Dispatch<Action>, today: ISODate) {
       await withPending(task.id, async () => {
         try {
           const userId = await taskData.getVerifiedUserId();
-          dispatch({ type: "task/replace", task: await taskData.updateTaskStatus(userId, task.id, nextStatus) });
+          recordTaskAction({ type: "task/replace", task: await taskData.updateTaskStatus(userId, task.id, nextStatus) });
         } catch (err) {
-          dispatch({ type: "task/replace", task }); // restore exactly what was there before
+          recordTaskAction({ type: "task/replace", task }); // restore exactly what was there before
           notify("error", messageOf(err));
         }
       });
@@ -254,7 +332,7 @@ function createActions(dispatch: React.Dispatch<Action>, today: ISODate) {
         try {
           const userId = await taskData.getVerifiedUserId();
           await taskData.deleteTask(userId, task.id);
-          dispatch({ type: "task/remove", id: task.id });
+          recordTaskAction({ type: "task/remove", id: task.id });
           notify("success", `Deleted “${task.title}”`);
           return true;
         } catch (err) {
@@ -322,6 +400,9 @@ function StoreProvider({ today, children }: { today: ISODate; children: ReactNod
   useEffect(() => {
     // Initial state is already "loading", so no extra loading dispatch here.
     void actions.loadTasks({ showLoading: false });
+    void actions.loadProjects({ showLoading: false });
+    void actions.loadInbox({ showLoading: false });
+    void actions.loadFocus({ showLoading: false });
   }, [actions]);
 
   return (

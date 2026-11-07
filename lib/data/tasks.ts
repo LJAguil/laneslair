@@ -36,10 +36,11 @@ export interface TaskInsert {
   priority: Priority;
   status: TaskStatus;
   due_at: string | null;
+  project_id: string | null;
 }
 
 /** Columns the app writes on update. Omitted keys are left unchanged in the database. */
-export type TaskUpdate = Partial<Pick<TaskInsert, "title" | "description" | "priority" | "status" | "due_at">> & {
+export type TaskUpdate = Partial<Pick<TaskInsert, "title" | "description" | "priority" | "status" | "due_at" | "project_id">> & {
   completed_at?: string | null;
   updated_at: string;
 };
@@ -52,6 +53,7 @@ export interface TaskChanges {
   /** Calendar day, or undefined to clear the due date. */
   dueDate?: ISODate;
   status: TaskStatus;
+  projectId?: string;
 }
 
 const COLUMNS = "id, user_id, project_id, title, description, status, priority, due_at, completed_at, created_at";
@@ -72,6 +74,8 @@ export function describeTaskError(action: string, error: Partial<PostgrestError>
   if (typeof navigator !== "undefined" && navigator.onLine === false) return `Couldn't ${action} — you appear to be offline.`;
   const code = error && "code" in error ? error.code : undefined;
   switch (code) {
+    case "23503":
+      return `Couldn't ${action} — the selected project is no longer available for your account. Refresh projects and choose another.`;
     case "23502": // not_null_violation
       return `Couldn't ${action} — a required field was missing. Please check the form and try again.`;
     case "23514": // check_violation
@@ -117,6 +121,15 @@ export function rowToTask(row: TaskRow): Task {
   };
 }
 
+/** Reject fixture ids; ownership is enforced by RLS and the composite FK. */
+export function taskProjectId(value?: string): string | null {
+  if (!value) return null;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) {
+    throw new TaskDataError("Choose a project from your account.");
+  }
+  return value;
+}
+
 export function buildTaskInsert(userId: string, input: NewTaskInput): TaskInsert {
   return {
     user_id: userId,
@@ -125,8 +138,7 @@ export function buildTaskInsert(userId: string, input: NewTaskInput): TaskInsert
     priority: input.priority,
     status: "todo",
     due_at: input.dueDate ? dueDateToTimestamp(input.dueDate) : null,
-    // project_id is deliberately never sent: projects still live in local
-    // sample data, so their ids don't exist in public.projects.
+    project_id: taskProjectId(input.projectId),
   };
 }
 
@@ -152,6 +164,11 @@ export function buildTaskUpdate(previous: Task, changes: TaskChanges, now: Date 
 
   if ((changes.dueDate ?? null) !== (previous.dueDate ?? null)) {
     update.due_at = changes.dueDate ? dueDateToTimestamp(changes.dueDate) : null;
+  }
+
+  // Omitting projectId preserves the link; explicit undefined clears it.
+  if (Object.prototype.hasOwnProperty.call(changes, "projectId") && changes.projectId !== previous.projectId) {
+    update.project_id = taskProjectId(changes.projectId);
   }
 
   if (changes.status !== previous.status) {

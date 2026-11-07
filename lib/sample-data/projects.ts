@@ -32,7 +32,7 @@ export function sampleProjects(T: ISODate): Project[] {
       id: "p4",
       name: "Thanksgiving trip",
       description: "Flights, packing list, and plans with family.",
-      status: "planning",
+      status: "active",
       dueDate: addDays(T, 42),
       color: "amber",
     },
@@ -48,7 +48,7 @@ export function sampleProjects(T: ISODate): Project[] {
       id: "p6",
       name: "Apartment refresh",
       description: "New shelves, desk lamp, and a plant corner.",
-      status: "on_hold",
+      status: "paused",
       color: "cyan",
     },
   ];

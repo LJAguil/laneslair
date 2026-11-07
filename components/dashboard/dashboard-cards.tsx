@@ -6,6 +6,8 @@ import Link from "next/link";
 import { EventRow } from "@/components/discover/event-row";
 import { GoalProgress } from "@/components/habits/goal-progress";
 import { HabitRow } from "@/components/habits/habit-row";
+import { ProjectLoadState } from "@/components/projects/project-load-state";
+import { EmptyState } from "@/components/page-header";
 import { ProjectCard } from "@/components/projects/project-card";
 import { TaskList } from "@/components/tasks/task-list";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -41,7 +43,7 @@ export function PriorityTasksCard() {
 }
 
 export function ProjectsCard() {
-  const { projects, tasks } = useAppState();
+  const { projects, projectsStatus, tasks, tasksStatus } = useAppState();
   const active = projects.filter((p) => p.status === "active").slice(0, 4);
   return (
     <Card>
@@ -50,11 +52,13 @@ export function ProjectsCard() {
         icon={<FolderKanban className="h-[18px] w-[18px]" />}
         action={<ViewAll href="/projects" label="View all projects" />}
       />
-      <div className="grid gap-3 sm:grid-cols-2">
+      <ProjectLoadState />
+      {projectsStatus === "ready" && active.length === 0 && <EmptyState title="No active projects" description="Create or activate a project on the Projects page." />}
+      {projectsStatus === "ready" && <div className="grid gap-3 sm:grid-cols-2">
         {active.map((p) => (
-          <ProjectCard key={p.id} project={p} progress={projectProgress(p, tasks)} compact />
+          <ProjectCard key={p.id} project={p} progress={projectProgress(p, tasks)} tasksStatus={tasksStatus} compact />
         ))}
-      </div>
+      </div>}
     </Card>
   );
 }

@@ -5,6 +5,7 @@ import { createContext, useContext } from "react";
 /** Shell-level UI controls any page can trigger (e.g. a dashboard "Quick add" button). */
 export interface ShellControls {
   openQuickAdd: () => void;
+  openNewTask: () => void;
   openSearch: () => void;
 }
 

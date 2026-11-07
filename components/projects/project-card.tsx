@@ -1,4 +1,5 @@
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { ProjectStatusBadge } from "@/components/ui/badge";
 import { ProgressBar } from "@/components/ui/progress";
 import { formatShortDate } from "@/lib/dates";
@@ -10,9 +11,12 @@ interface ProjectCardProps {
   progress: { done: number; total: number; percent: number };
   /** Compact variant for the dashboard. */
   compact?: boolean;
+  onEdit?: () => void;
+  pending?: boolean;
+  tasksStatus?: "loading" | "ready" | "error";
 }
 
-export function ProjectCard({ project, progress, compact }: ProjectCardProps) {
+export function ProjectCard({ project, progress, compact, onEdit, pending, tasksStatus = "ready" }: ProjectCardProps) {
   const accent = accentClasses[project.color];
   return (
     <article className={cn("rounded-xl border border-line bg-raised/40 transition-colors hover:border-line-strong", compact ? "p-4" : "p-5")}>
@@ -21,10 +25,15 @@ export function ProjectCard({ project, progress, compact }: ProjectCardProps) {
           <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", accent.dot)} aria-hidden="true" />
           <h3 className="truncate text-sm font-semibold">{project.name}</h3>
         </div>
-        <ProjectStatusBadge status={project.status} />
+        <div className="flex shrink-0 items-center gap-2">
+          <ProjectStatusBadge status={project.status} />
+          {onEdit && <Button variant="ghost" size="icon-sm" disabled={pending} onClick={onEdit} aria-label={`Edit “${project.name}”`}><Pencil className="h-4 w-4" aria-hidden="true" /></Button>}
+        </div>
       </div>
       {!compact && <p className="mt-2 text-sm text-muted">{project.description}</p>}
-      {progress.total === 0 ? (
+      {tasksStatus !== "ready" ? (
+        <p className="mt-4 text-xs text-subtle">{tasksStatus === "loading" ? "Loading task progress…" : "Task progress unavailable. Retry loading tasks on the Tasks page."}</p>
+      ) : progress.total === 0 ? (
         <p className={cn("text-xs text-subtle", compact ? "mt-3" : "mt-4")}>No tasks linked yet</p>
       ) : (
         <>

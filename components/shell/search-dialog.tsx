@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, FolderKanban, ListChecks, Search, Target, type LucideIcon } from "lucide-react";
+import { CalendarDays, FolderKanban, Inbox, ListChecks, Search, Target, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useId, useMemo, useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
@@ -24,7 +24,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
 }
 
 function SearchPanel({ onNavigate }: { onNavigate: () => void }) {
-  const { tasks, projects, habits, events } = useAppState();
+  const { tasks, projects, habits, events, inboxNotes } = useAppState();
   const [query, setQuery] = useState("");
   const inputId = useId();
 
@@ -35,12 +35,13 @@ function SearchPanel({ onNavigate }: { onNavigate: () => void }) {
     }
     const match = (s: string) => s.toLowerCase().includes(q);
     return [
+      ...inboxNotes.filter((n) => !n.archivedAt && match(n.body)).map((n) => ({ id: n.id, label: n.body.slice(0, 100), meta: "Capture", href: "/inbox", icon: Inbox })),
       ...tasks.filter((t) => match(t.title)).map((t) => ({ id: t.id, label: t.title, meta: "Task", href: "/tasks", icon: ListChecks })),
       ...projects.filter((p) => match(p.name)).map((p) => ({ id: p.id, label: p.name, meta: "Project", href: "/projects", icon: FolderKanban })),
       ...habits.filter((h) => match(h.name)).map((h) => ({ id: h.id, label: h.name, meta: "Habit", href: "/habits", icon: Target })),
       ...events.filter((e) => match(e.title) || match(e.venue)).map((e) => ({ id: e.id, label: e.title, meta: "Event", href: "/discover", icon: CalendarDays })),
     ].slice(0, 12);
-  }, [query, tasks, projects, habits, events]);
+  }, [query, tasks, projects, habits, events, inboxNotes]);
 
   return (
     <div>
