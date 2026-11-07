@@ -4,17 +4,18 @@
 // Every mutation goes through `actions`, so components never talk to the
 // database directly.
 //
-// Tasks, projects, Inbox, and daily focus are persisted in Supabase. Everything else
-// (habits, goals, events, schedule, notifications, chats) is still
+// Tasks, projects, habits, Inbox, and daily focus are persisted in Supabase. Everything else
+// (goals, events, schedule, notifications, chats) is still
 // local sample data that resets on a full page reload.
 
 import { createContext, useContext, useEffect, useMemo, useReducer, useSyncExternalStore, type ReactNode } from "react";
+import { createHabitActions, initialHabitState, reduceHabits, type HabitAction, type HabitSlice } from "./habit-state";
 import { mergeTaskRead, type TaskWrite } from "./task-read";
 import { createInboxActions, initialInboxState, reduceInbox, type InboxAction, type InboxSlice } from "./inbox-state";
 import * as taskData from "@/lib/data/tasks";
 import { localToday, timestampToLocalDateTime } from "@/lib/dates";
 import { sampleEvents } from "@/lib/sample-data/events";
-import { sampleGoals, sampleHabits } from "@/lib/sample-data/habits-goals";
+import { sampleGoals } from "@/lib/sample-data/habits-goals";
 import { sampleConversations, sampleNotifications, sampleProfile, sampleSchedule } from "@/lib/sample-data/misc";
 import * as projectData from "@/lib/data/projects";
 import type {
@@ -22,7 +23,6 @@ import type {
   ChatMessage,
   Conversation,
   Goal,
-  Habit,
   ISODate,
   LocalEvent,
   NewTaskInput,
@@ -40,7 +40,7 @@ export interface Notice {
   message: string;
 }
 
-export interface AppState extends InboxSlice {
+export interface AppState extends InboxSlice, HabitSlice {
   /** The user's local calendar day, read once in the browser. */
   today: ISODate;
   tasks: Task[];
@@ -54,7 +54,6 @@ export interface AppState extends InboxSlice {
   projectsStatus: LoadStatus;
   projectsError: string | null;
   pendingProjectIds: string[];
-  habits: Habit[];
   goals: Goal[];
   events: LocalEvent[];
   schedule: ScheduleItem[];
@@ -66,6 +65,7 @@ export interface AppState extends InboxSlice {
 function createInitialState(today: ISODate): AppState {
   return {
     ...initialInboxState,
+    ...initialHabitState,
     today,
     tasks: [],
     tasksStatus: "loading",
@@ -76,7 +76,6 @@ function createInitialState(today: ISODate): AppState {
     projectsStatus: "loading",
     projectsError: null,
     pendingProjectIds: [],
-    habits: sampleHabits(today),
     goals: sampleGoals(today),
     events: sampleEvents(today),
     schedule: sampleSchedule(today),
@@ -86,7 +85,7 @@ function createInitialState(today: ISODate): AppState {
   };
 }
 
-type Action = InboxAction
+type Action = InboxAction | HabitAction
   | { type: "projects/loading" }
   | { type: "projects/loaded"; projects: Project[] }
   | { type: "projects/failed"; message: string }
@@ -101,7 +100,6 @@ type Action = InboxAction
   | { type: "task/pending"; id: string; pending: boolean }
   | { type: "notice/show"; notice: Notice }
   | { type: "notice/dismiss"; id: number }
-  | { type: "habit/toggle"; id: string; date: ISODate }
   | { type: "event/toggleSaved"; id: string }
   | { type: "notification/read"; id: string }
   | { type: "notification/readAll" }
@@ -111,6 +109,8 @@ type Action = InboxAction
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
+    case "habits/loading": case "habits/loaded": case "habits/failed": case "habits/saved": case "habits/pending": case "habits/log-failed": case "habits/log-confirmed":
+      return { ...state, ...reduceHabits(state, action) };
     case "inbox/loading": case "inbox/loaded": case "inbox/failed": case "inbox/saved": case "inbox/pending":
     case "focus/loading": case "focus/loaded": case "focus/failed": case "focus/saving":
       return { ...state, ...reduceInbox(state, action) };
@@ -151,20 +151,6 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, notice: action.notice };
     case "notice/dismiss":
       return state.notice?.id === action.id ? { ...state, notice: null } : state;
-    case "habit/toggle":
-      return {
-        ...state,
-        habits: state.habits.map((h) =>
-          h.id !== action.id
-            ? h
-            : {
-                ...h,
-                checkIns: h.checkIns.includes(action.date)
-                  ? h.checkIns.filter((d) => d !== action.date)
-                  : [...h.checkIns, action.date],
-              },
-        ),
-      };
     case "event/toggleSaved":
       return {
         ...state,
@@ -194,7 +180,7 @@ function reducer(state: AppState, action: Action): AppState {
 const messageOf = (err: unknown) =>
   err instanceof taskData.TaskDataError ? err.message : "Something went wrong. Please try again.";
 
-function createActions(dispatch: React.Dispatch<Action>, today: ISODate) {
+function createActions(dispatch: React.Dispatch<Action>) {
   let noticeId = 0;
   let loadSeq = 0;
   let taskRevision = 0;
@@ -227,6 +213,7 @@ function createActions(dispatch: React.Dispatch<Action>, today: ISODate) {
   };
 
   return {
+    ...createHabitActions(dispatch, notify),
     ...createInboxActions((action) => {
       if (action.type === "task/add") recordTaskAction(action);
       else dispatch(action);
@@ -345,9 +332,6 @@ function createActions(dispatch: React.Dispatch<Action>, today: ISODate) {
     dismissNotice(id: number) {
       dispatch({ type: "notice/dismiss", id });
     },
-    toggleHabitCheckIn(id: string, date: ISODate = today) {
-      dispatch({ type: "habit/toggle", id, date });
-    },
     toggleEventSaved(id: string) {
       dispatch({ type: "event/toggleSaved", id });
     },
@@ -380,7 +364,12 @@ const ActionsContext = createContext<AppActions | null>(null);
 // The local date is only known in the browser. On the server (and during the
 // first hydration pass) this returns null, so nothing date-dependent is
 // prerendered or cached, and the server and client HTML always match.
-const noSubscribe = () => () => {};
+function subscribeDay(onChange: () => void) {
+  const timer = window.setInterval(onChange, 60000);
+  window.addEventListener("focus",onChange);
+  document.addEventListener("visibilitychange",onChange);
+  return () => { clearInterval(timer); window.removeEventListener("focus",onChange); document.removeEventListener("visibilitychange",onChange); };
+}
 const getServerToday = () => null;
 
 /**
@@ -388,14 +377,14 @@ const getServerToday = () => null;
  * browser's local date is known (one quick pass after hydration).
  */
 export function AppStoreProvider({ children, fallback = null }: { children: ReactNode; fallback?: ReactNode }) {
-  const today = useSyncExternalStore(noSubscribe, localToday, getServerToday);
+  const today = useSyncExternalStore(subscribeDay, localToday, getServerToday);
   if (!today) return fallback;
   return <StoreProvider today={today}>{children}</StoreProvider>;
 }
 
 function StoreProvider({ today, children }: { today: ISODate; children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, today, createInitialState);
-  const actions = useMemo(() => createActions(dispatch, today), [today]);
+  const actions = useMemo(() => createActions(dispatch), [dispatch]);
 
   useEffect(() => {
     // Initial state is already "loading", so no extra loading dispatch here.
@@ -403,11 +392,12 @@ function StoreProvider({ today, children }: { today: ISODate; children: ReactNod
     void actions.loadProjects({ showLoading: false });
     void actions.loadInbox({ showLoading: false });
     void actions.loadFocus({ showLoading: false });
+    void actions.loadHabits({ showLoading: false });
   }, [actions]);
 
   return (
     <ActionsContext.Provider value={actions}>
-      <StateContext.Provider value={state}>{children}</StateContext.Provider>
+      <StateContext.Provider value={{ ...state, today }}>{children}</StateContext.Provider>
     </ActionsContext.Provider>
   );
 }

@@ -1,6 +1,7 @@
 // Prototype-only "assistant". It builds canned replies from local sample data
 // with simple keyword matching — there is no AI model and nothing leaves the browser.
 // Later this can be replaced by a server route that calls a real model.
+import { streakUnit } from "@/lib/habits";
 import { formatDueLabel } from "@/lib/dates";
 import { habitStreak, isCheckedIn, isOverdue, priorityTasks, upcomingEvents } from "@/lib/selectors";
 import type { AppState } from "@/lib/store/app-store";
@@ -16,7 +17,8 @@ export function mockAssistantReply(prompt: string, state: AppState): string {
   }
 
   if (q.includes("habit") || q.includes("streak")) {
-    const lines = state.habits.map((h) => `• ${h.name}: ${habitStreak(h, today)}-day streak${isCheckedIn(h, today) ? " ✓ today" : ""}`);
+    if (state.habitsStatus !== "ready") return "Your habits are unavailable right now. Open Habits & Goals to load or retry them.";
+    const lines = state.habits.filter((h) => h.isActive).map((h) => `• ${h.name}: ${h.streakEnabled ? `${habitStreak(h, today)}-${streakUnit(h)} streak` : "streak tracking off"}${isCheckedIn(h, today) ? " ✓ today" : ""}`);
     return `Here's how your habits look:\n\n${lines.join("\n")}`;
   }
 

@@ -101,3 +101,35 @@ dialog {
   button, summary, select, input:not([type="checkbox"]) { min-height: 44px; }
   button { min-width: 44px; }
 }
+
+/* All themes keep the same layout and semantic controls. No external artwork. */
+:root[data-theme="voyage"] {
+  --color-canvas: #0e1924;
+  --color-panel: #142333;
+  --color-raised: #1c3042;
+  --color-hover: #243c50;
+  --color-line: #304557;
+  --color-line-strong: #466175;
+  --color-fg: #f4f4ed;
+  --color-muted: #b0bdc8;
+  --color-subtle: #95a7b8;
+  --color-accent: #e9ba63;
+  --color-accent-strong: #f3cf8d;
+  --color-accent-soft: rgb(233 186 99 / 0.13);
+  --color-on-accent: #17212c;
+}
+:root[data-theme="shire"] {
+  --color-canvas: #141b17;
+  --color-panel: #1b2720;
+  --color-raised: #27362b;
+  --color-hover: #334635;
+  --color-line: #35483a;
+  --color-line-strong: #4e6653;
+  --color-fg: #f2f2e7;
+  --color-muted: #bac4b3;
+  --color-subtle: #9eaf99;
+  --color-accent: #b6cb8b;
+  --color-accent-strong: #d0dda8;
+  --color-accent-soft: rgb(182 203 139 / 0.13);
+  --color-on-accent: #182217;
+}

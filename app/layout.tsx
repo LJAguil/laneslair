@@ -1,4 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
+import { ThemeSync } from "@/components/theme/theme-picker";
+import { THEME_BOOTSTRAP } from "@/lib/themes";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -33,8 +36,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html suppressHydrationWarning lang="en" className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
       <body className="min-h-dvh bg-canvas font-sans text-fg">
+        <Script id="lair-theme" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
+        <ThemeSync />
 {children}</body>
     </html>
   );

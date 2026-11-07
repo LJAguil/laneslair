@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useId, useState, type FormEvent } from "react";
 import { useShell } from "@/components/shell/shell-context";
 import { CaptureForm } from "@/components/inbox/capture-form";
+import { HabitsCard } from "@/components/dashboard/dashboard-cards";
 import { TaskList } from "@/components/tasks/task-list";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -40,6 +41,7 @@ export function TodayView() {
         <TaskList tasks={upcoming} compact emptyTitle="A little breathing room" emptyDescription="Nothing else urgent or due soon. You can choose any task as your focus." />
         <Link href="/tasks" className={buttonClasses("ghost", "sm", "mt-4 min-h-11")}>All tasks<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
       </Card>
+      <HabitsCard />
       <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-muted">
         <Link href="/projects" className="hover:text-fg hover:underline">Your projects</Link>
         <Link href="/overview" className="hover:text-fg hover:underline">Activity & overview</Link>

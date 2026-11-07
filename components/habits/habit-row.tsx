@@ -1,75 +1,69 @@
 "use client";
 
-import { Check, Flame } from "lucide-react";
-import { formatWeekday, lastNDays } from "@/lib/dates";
+import { Check, Flame, Loader2, Minus, Pencil, Plus } from "lucide-react";
+import { useId, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/field";
+import { ProgressBar } from "@/components/ui/progress";
+import { formatShortDate, lastNDays } from "@/lib/dates";
+import { habitDay, habitStartDate, habitWeekCount, amountLabel, streakUnit } from "@/lib/habits";
+import type { HabitProgressRequest } from "@/lib/data/habits";
 import { habitStreak, isCheckedIn } from "@/lib/selectors";
 import { useAppActions, useAppState } from "@/lib/store/app-store";
-import type { Habit, HabitFrequency, ISODate } from "@/lib/types";
-import { accentClasses, cn, pluralize } from "@/lib/utils";
+import type { Habit } from "@/lib/types";
+import { accentClasses, cn } from "@/lib/utils";
 
-const frequencyLabel: Record<HabitFrequency, string> = { daily: "Daily", weekdays: "Weekdays", weekly: "Weekly" };
+export function HabitRow({ habit, showWeek = false, onEdit }: { habit: Habit; showWeek?: boolean; onEdit?: () => void }) {
+  const { recordHabit } = useAppActions();
+  const { today, pendingHabitIds, failedHabitRequests } = useAppState();
+  const [selectedDate,setDate] = useState<string | null>(null);
+  const date = selectedDate ?? today;
+  const [amount,setAmount] = useState(habit.unit === "mL" ? "250" : habit.unit === "fl oz" ? "8" : "1");
+  const failed = failedHabitRequests[habit.id]?.request;
+  const error = failedHabitRequests[habit.id]?.message;
+  const [saving,setSaving] = useState(false);
+  const inFlight = useRef(false);
+  const id = useId();
+  const day = habitDay(habit,date);
+  const checked = isCheckedIn(habit,date);
+  const streak = habitStreak(habit,today);
+  const busy = saving || pendingHabitIds.includes(habit.id);
+  const locked = busy || !!failed || !habit.isActive;
+  const step = Number(amount);
+  const validAmount = Number.isFinite(step) && step > 0 && step <= 1000000 && Math.abs(step*1000-Math.round(step*1000)) < 0.000001;
 
-/** One habit with a check-in toggle, its streak, and (optionally) the last 7 days. */
-export function HabitRow({ habit, showWeek = false }: { habit: Habit; showWeek?: boolean }) {
-  const { toggleHabitCheckIn } = useAppActions();
-  const { today } = useAppState();
-  const checked = isCheckedIn(habit, today);
-  const streak = habitStreak(habit, today);
-  const accent = accentClasses[habit.color];
-
-  return (
-    <li className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-      <button
-        type="button"
-        onClick={() => toggleHabitCheckIn(habit.id)}
-        aria-pressed={checked}
-        aria-label={`${checked ? "Undo check-in for" : "Check in"} ${habit.name}`}
-        className={cn(
-          "grid h-9 w-9 shrink-0 place-items-center rounded-xl border transition-colors",
-          checked ? "border-transparent bg-accent text-on-accent" : "border-line-strong text-subtle hover:border-accent hover:text-accent-strong",
-        )}
-      >
-        <Check className="h-4 w-4" strokeWidth={checked ? 3 : 2} aria-hidden="true" />
-      </button>
-
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{habit.name}</p>
-        <p className="text-xs text-subtle">{frequencyLabel[habit.frequency]}</p>
+  async function log(request: HabitProgressRequest) {
+    if (inFlight.current) return;
+    inFlight.current = true; setSaving(true);
+    try { await recordHabit(habit,request); }
+    catch { /* The store retains the request and error across page navigation. */ }
+    finally { inFlight.current = false; setSaving(false); }
+  }
+  function update(mode: "add" | "set", value: number) {
+    void log({ id: crypto.randomUUID(),habitId: habit.id,date,mode,value });
+  }
+  return <li className="min-w-0 space-y-3 py-4 first:pt-0 last:pb-0" aria-busy={busy}>
+    <div className="flex items-start gap-3">
+      <div className="min-w-0 flex-1"><p className="flex items-start gap-2 break-words text-sm font-medium"><span aria-hidden="true" className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full",accentClasses[habit.color].dot)} />{habit.name}</p><p className="mt-0.5 text-xs text-subtle">{habit.frequency === "daily" ? "Every day" : `${habit.targetPerWeek} successful days per week`}{habit.frequency !== "daily" && ` · ${habitWeekCount(habit,today)} this week`}</p></div>
+      {habit.streakEnabled && <span className={cn("inline-flex shrink-0 items-center gap-1 text-xs",streak > 0 ? "text-warning" : "text-subtle")} title={`${streak} ${streakUnit(habit)} streak`}><Flame className="h-4 w-4" aria-hidden="true" />{streak} {streakUnit(habit)}{streak === 1 ? "" : "s"}</span>}
+      {onEdit && <Button size="icon-sm" variant="ghost" onClick={onEdit} disabled={locked} aria-label={`Edit ${habit.name}`}><Pencil className="h-4 w-4" aria-hidden="true" /></Button>}
+    </div>
+    {habit.trackingType === "quantity" ? <>
+      <div className="flex flex-wrap items-baseline justify-between gap-2"><p className="text-sm"><span className="font-semibold">{amountLabel(day.amount,habit.unit)}</span><span className="text-muted"> / {amountLabel(day.target,habit.unit)}</span></p>{checked && <span className="text-xs text-success">Target reached</span>}</div>
+      <ProgressBar value={day.amount/day.target*100} label={`${habit.name} daily progress`} barClassName={accentClasses[habit.color].bar} />
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="min-w-0 flex-1 text-xs text-muted" htmlFor={`${id}-amount`}>Amount ({habit.unit})<Input id={`${id}-amount`} className="mt-1" type="number" inputMode="decimal" min="0.001" max="1000000" step="0.001" value={amount} onChange={(e) => setAmount(e.target.value)} disabled={locked} /></label>
+        <Button variant="ghost" size="icon" className="h-11 w-11" disabled={locked || !validAmount || day.amount === 0} onClick={() => update("add",-step)} aria-label={`Subtract ${amount} ${habit.unit} from ${habit.name}`}><Minus className="h-4 w-4" aria-hidden="true" /></Button>
+        <Button variant="primary" className="h-11" disabled={locked || !validAmount} onClick={() => update("add",step)}>{busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}Add</Button>
       </div>
-
-      {showWeek && <WeekDots habit={habit} colorClass={accent.dot} today={today} />}
-
-      <span
-        className={cn("inline-flex w-14 items-center justify-end gap-1 text-sm tabular-nums", streak > 0 ? "text-warning" : "text-subtle")}
-        title={`${pluralize(streak, "day")} streak`}
-      >
-        <Flame className="h-4 w-4" aria-hidden="true" />
-        {streak}
-        <span className="sr-only"> day streak</span>
-      </span>
-    </li>
-  );
-}
-
-function WeekDots({ habit, colorClass, today }: { habit: Habit; colorClass: string; today: ISODate }) {
-  const days = lastNDays(7, today);
-  return (
-    <ol className="hidden items-center gap-1.5 sm:flex" aria-label={`${habit.name}, last 7 days`}>
-      {days.map((d) => {
-        const done = habit.checkIns.includes(d);
-        return (
-          <li key={d} className="flex flex-col items-center gap-1">
-            <span className={cn("h-5 w-5 rounded-md", done ? colorClass : "bg-raised", d === today && "ring-1 ring-line-strong ring-offset-1 ring-offset-panel")}>
-              <span className="sr-only">
-                {formatWeekday(d)}: {done ? "done" : "missed"}
-              </span>
-            </span>
-            <span className="text-[10px] text-subtle" aria-hidden="true">
-              {formatWeekday(d, "narrow")}
-            </span>
-          </li>
-        );
-      })}
-    </ol>
-  );
+    </> : <Button variant={checked ? "primary" : "secondary"} className="h-11" aria-pressed={checked} disabled={locked} onClick={() => update("set",checked ? 0 : 1)}>
+      {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Check className="h-4 w-4" aria-hidden="true" />}{checked ? "Checked in · Undo" : "Check in"}
+    </Button>}
+    {showWeek && <div className="flex flex-wrap items-center gap-2"><label htmlFor={`${id}-date`} className="text-xs text-muted">Log for</label><Select id={`${id}-date`} className="min-w-0 sm:max-w-52" value={date} onChange={(e) => setDate(e.target.value === today ? null : e.target.value)} disabled={locked}>
+      {lastNDays(7,today).reverse().filter((d) => d >= habitStartDate(habit) || habit.days[d]).map((d) => <option key={d} value={d}>{d === today ? "Today" : formatShortDate(d)}{isCheckedIn(habit,d) ? " · done" : ""}</option>)}
+    </Select></div>}
+    {date !== today && <p className="text-xs text-warning">Editing progress for {formatShortDate(date)}.</p>}
+    {error && !failed && <p role="alert" className="text-sm text-danger">{error}</p>}
+    {failed && <div role="alert" className="space-y-2 rounded-lg border border-danger/30 p-3"><p className="text-sm text-danger">{error}</p><p className="text-xs text-muted">Retry to confirm the update safely. It won’t count twice. {failed.date !== date && `This update is for ${formatShortDate(failed.date)}.`}</p><Button disabled={busy} onClick={() => void log(failed)}>Retry update</Button></div>}
+  </li>;
 }

@@ -1,6 +1,6 @@
 // Pure business logic. No React, no UI — easy to unit test and reuse
 // whether data comes from sample files or a database.
-import { addDays, daysBetween, lastNDays, parseISODate } from "./dates";
+import { daysBetween, lastNDays } from "./dates";
 import type {
   Goal,
   Habit,
@@ -80,29 +80,7 @@ export function projectProgress(project: Project, tasks: Task[]) {
   return { done, total, percent: total === 0 ? 0 : Math.round((done / total) * 100) };
 }
 
-function countsForStreak(habit: Habit, date: ISODate): boolean {
-  if (habit.frequency !== "weekdays") return true;
-  const day = parseISODate(date).getDay();
-  return day !== 0 && day !== 6;
-}
-
-/**
- * Consecutive check-ins ending today. If today isn't checked in yet, the streak
- * is counted from yesterday so it doesn't look "broken" before the day is over.
- */
-export function habitStreak(habit: Habit, today: ISODate): number {
-  const checked = new Set(habit.checkIns);
-  let cursor = checked.has(today) ? today : addDays(today, -1);
-  let streak = 0;
-  for (let i = 0; i < 365; i++) {
-    if (countsForStreak(habit, cursor)) {
-      if (!checked.has(cursor)) break;
-      streak++;
-    }
-    cursor = addDays(cursor, -1);
-  }
-  return streak;
-}
+export { habitStreakValue as habitStreak } from "./habits";
 
 export const isCheckedIn = (habit: Habit, date: ISODate) =>
   habit.checkIns.includes(date);

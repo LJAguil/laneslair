@@ -5,6 +5,7 @@ import { ArrowRight, Compass, FolderKanban, ListChecks, Target, Trophy } from "l
 import Link from "next/link";
 import { EventRow } from "@/components/discover/event-row";
 import { GoalProgress } from "@/components/habits/goal-progress";
+import { HabitLoadState } from "@/components/habits/habit-load-state";
 import { HabitRow } from "@/components/habits/habit-row";
 import { ProjectLoadState } from "@/components/projects/project-load-state";
 import { EmptyState } from "@/components/page-header";
@@ -64,21 +65,24 @@ export function ProjectsCard() {
 }
 
 export function HabitsCard() {
-  const { habits, today } = useAppState();
-  const done = habits.filter((h) => isCheckedIn(h, today)).length;
+  const { habits, habitsStatus, today } = useAppState();
+  const active = habits.filter((h) => h.isActive);
+  const done = active.filter((h) => isCheckedIn(h, today)).length;
   return (
     <Card>
       <CardHeader
         title="Habit check-ins"
-        description={`${done} of ${habits.length} done today`}
+        description={habitsStatus === "ready" ? `${done} of ${active.length} checked in today` : undefined}
         icon={<Target className="h-[18px] w-[18px]" />}
         action={<ViewAll href="/habits" label="View all habits" />}
       />
-      <ul className="divide-y divide-line/70">
-        {habits.map((h) => (
+      <HabitLoadState />
+      {habitsStatus === "ready" && active.length === 0 && <EmptyState title="Make room for a small routine" description="Add water tracking or your own habit on Habits & Goals." />}
+      {habitsStatus === "ready" && <ul className="divide-y divide-line/70">
+        {active.map((h) => (
           <HabitRow key={h.id} habit={h} />
         ))}
-      </ul>
+      </ul>}
     </Card>
   );
 }

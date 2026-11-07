@@ -43,12 +43,23 @@ export interface Project {
 
 export type AccentColor = "violet" | "blue" | "emerald" | "amber" | "rose" | "cyan";
 
-export type HabitFrequency = "daily" | "weekdays" | "weekly";
+export type HabitFrequency = "daily" | "weekly" | "custom";
+export type HabitTracking = "check" | "quantity";
+export interface HabitDay { amount: number; target: number }
 
 export interface Habit {
   id: string;
   name: string;
+  description: string;
   frequency: HabitFrequency;
+  targetPerWeek: number;
+  trackingType: HabitTracking;
+  dailyTarget: number;
+  unit: string;
+  streakEnabled: boolean;
+  isActive: boolean;
+  createdAt: ISODateTime;
+  days: Record<ISODate, HabitDay>;
   /** Dates (ISO) on which the habit was checked in. */
   checkIns: ISODate[];
   color: AccentColor;

@@ -17,7 +17,7 @@ const SERIES = [
 const CHART_HEIGHT = 128;
 
 export function WeeklyActivityCard() {
-  const { tasks, habits, today } = useAppState();
+  const { tasks, tasksStatus, habits, habitsStatus, today } = useAppState();
   const [view, setView] = useState<"chart" | "table">("chart");
   const days = weeklyActivity(tasks, habits, today);
   const max = Math.max(1, ...days.flatMap((d) => [d.tasksCompleted, d.habitCheckIns]));
@@ -25,6 +25,8 @@ export function WeeklyActivityCard() {
     tasks: days.reduce((n, d) => n + d.tasksCompleted, 0),
     habits: days.reduce((n, d) => n + d.habitCheckIns, 0),
   };
+
+  if (tasksStatus !== "ready" || habitsStatus !== "ready") return <Card><CardHeader title="Weekly activity" /><p role="status" className="text-sm text-muted">{tasksStatus === "error" || habitsStatus === "error" ? "Activity is unavailable until tasks and habits are loaded. Retry from their pages." : "Loading activity…"}</p></Card>;
 
   return (
     <Card>

@@ -2,6 +2,7 @@
 
 import { Bell, Globe, Palette, User } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
+import { ThemePicker } from "@/components/theme/theme-picker";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -21,7 +22,7 @@ const TIME_ZONES = [
 export function SettingsView() {
   return (
     <>
-      <PageHeader title="Settings" description="Changes last for this browser session only — saving them to your account comes in a later step." />
+      <PageHeader title="Settings" description="Make the Lair yours. Themes stay saved on this browser; profile and notification controls are still session-only prototypes." />
       <div className="mx-auto max-w-3xl space-y-5">
         <ProfileSection />
         <AppearanceSection />
@@ -80,30 +81,8 @@ function ProfileSection() {
 
 function AppearanceSection() {
   return (
-    <Section id="appearance" title="Appearance" description="Lane's Lair is dark-first. More options are planned." icon={<Palette className="h-[18px] w-[18px]" />}>
-      <fieldset>
-        <legend className="mb-2 text-sm font-medium text-muted">Theme</legend>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {[
-            { value: "dark", label: "Dark", hint: "Current theme", available: true },
-            { value: "light", label: "Light", hint: "Coming soon", available: false },
-          ].map((opt) => (
-            <label
-              key={opt.value}
-              className={cn(
-                "flex items-center gap-3 rounded-xl border p-3 text-sm",
-                opt.available ? "cursor-pointer border-accent/40 bg-accent-soft" : "cursor-not-allowed border-line opacity-60",
-              )}
-            >
-              <input type="radio" name="theme" value={opt.value} defaultChecked={opt.available} disabled={!opt.available} className="accent-[var(--color-accent)]" />
-              <span>
-                <span className="block font-medium">{opt.label}</span>
-                <span className="block text-xs text-subtle">{opt.hint}</span>
-              </span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
+    <Section id="appearance" title="Appearance" description="A familiar layout, a different atmosphere." icon={<Palette className="h-[18px] w-[18px]" />}>
+      <ThemePicker />
     </Section>
   );
 }
@@ -112,8 +91,8 @@ function TimeZoneSection() {
   const { profile } = useAppState();
   const { updateProfile } = useAppActions();
   return (
-    <Section id="timezone" title="Time zone" description="Used for due dates, reminders, and event times." icon={<Globe className="h-[18px] w-[18px]" />}>
-      <Field label="Time zone" htmlFor="tz" hint="Saved as soon as you pick one.">
+    <Section id="timezone" title="Time zone" description="Prototype preference. Tasks and habits currently follow this device’s time zone." icon={<Globe className="h-[18px] w-[18px]" />}>
+      <Field label="Time zone" htmlFor="tz" hint="Kept for this session only; it does not change the device’s tracking date.">
         <Select id="tz" value={profile.timeZone} onChange={(e) => updateProfile({ timeZone: e.target.value })} className="sm:max-w-sm">
           {TIME_ZONES.map((tz) => (
             <option key={tz.value} value={tz.value}>

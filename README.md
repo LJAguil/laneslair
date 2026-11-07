@@ -11,7 +11,9 @@ A personal command center for tasks, projects, habits, goals, events, and an AI 
 | Inbox | Text capture, editing, archive/restore, and atomic task conversion (new migration required) |
 | Today | Quick capture, persisted daily focus, and a short task radar (new migration required for focus) |
 | Projects | Supabase creation/editing, Active/Paused/Completed/Archived statuses, task links and progress |
-| Habits and goals | Interactive sample data; changes reset on full refresh |
+| Habits | Persistent check-ins, water/quantity targets, optional daily or weekly streaks, archive/restore (habits migration required) |
+| Goals | Sample data; persistent goals are a later milestone |
+| Themes | Classic Lair, Grand Voyage, and Shire Night; saved per browser |
 | Events, schedule, notifications | Sample data; changes reset on full refresh |
 | AI assistant | Simulated replies; no model connection |
 | Profile/settings | Prototype state held in memory |
@@ -45,13 +47,17 @@ Restart the development server after changing these values. Public environment v
 
 This checkout expects an existing Supabase project. The original database setup SQL is **not included**, so cloning the repository cannot recreate the database by itself. Do not guess a replacement schema or seed sample tasks.
 
-The existing project reportedly contains `profiles`, `projects`, `tasks`, `habits`, `habit_logs`, `goals`, and `notifications` in `public`. The app queries `tasks` and `projects`, plus `inbox_notes` and `daily_focus` after the new migration is applied. Its RLS policies must enforce ownership with `auth.uid() = user_id`. Its description column is `text not null default ''`; missing or whitespace-only notes are stored as an empty string.
+The existing project reportedly contains `profiles`, `projects`, `tasks`, `habits`, `habit_logs`, `goals`, and `notifications` in `public`. The app queries `tasks`, `projects`, `habits`, and `habit_logs`, plus `inbox_notes` and `daily_focus` after their migrations are applied. Its RLS policies must enforce ownership with `auth.uid() = user_id`. Its description column is `text not null default ''`; missing or whitespace-only notes are stored as an empty string.
 
 Sign in using your existing Supabase Auth account. For a new installation, the owner must create and confirm an email/password account through the Supabase dashboard. There is no signup page. For personal use, also disable public signup in Supabase Auth settings; hiding signup in the UI does not disable the signup API.
 
 ### Inbox and Today database setup
 
 Review [the daily-use setup guide](docs/DAILY_USE_SETUP.md) and its proposed migration before using Inbox and persisted focus. The migration adds two tables and one atomic conversion function; it has not been applied to your remote project automatically. Until then, the app shows explicit setup errors for those features, while tasks and projects remain usable.
+
+### Habit and water setup
+
+Review [Habits and themes](docs/HABITS_AND_THEMES.md) and apply only its new `002` migration after approval. It extends the inspected habit tables, preserves existing check-ins, and adds safe incremental logging. Until it is applied, habits show an explicit setup error. Theme switching works independently of the database.
 
 ### Start the app
 
@@ -135,11 +141,11 @@ Before modifying Next.js behaviour, follow `AGENTS.md` and read the relevant ins
 ## Limitations and roadmap
 
 - Due dates use local-noon timestamps; crossing time zones can change the displayed day. Set explicit date/time rules before reminders.
-- There is no midnight timer for the stored current day. Refresh after leaving the app open overnight.
+- The current day updates on focus/visibility changes and about once a minute while open. Habit logs use the device's local calendar day; the prototype Settings time zone does not override it.
 - Concurrent edits in multiple tabs have no conflict detection or realtime synchronization.
 - Automated tests cover task data handling, with no browser coverage yet.
 - Database setup definitions still need a reviewed, credential-free record in version control.
-- Next: apply the reviewed Inbox/focus migration, manually verify captures and conversion, then approve an HTTPS deployment and test iPhone installation. Water tracking, notifications, themes, puzzles, and news follow.
+- Next: apply the reviewed Inbox/focus migration, manually verify captures and conversion, then approve an HTTPS deployment and test iPhone installation. Persistent water/habits and selectable themes are now implemented locally; apply their reviewed migration and complete the manual checks. Notifications, puzzles, and news follow.
 
 Hosting requires support for the Next.js server because authentication uses Proxy and Server Actions; static file hosting alone is insufficient. Set both public environment variables on the host before building. No deployment was verified during documentation work.
 

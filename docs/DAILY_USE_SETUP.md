@@ -70,4 +70,4 @@ Desktop tests and viewport adjustments cannot substitute for this physical-devic
 
 ## Later milestones
 
-Persist water intake, add configurable daily targets, then implement opt-in push delivery with server scheduling and quiet hours. Add selectable interest-inspired themes and an original daily guessing puzzle; chess and interest-based news follow. None of those features has been added as a nonfunctional placeholder on Today.
+Water intake, configurable habit targets, optional streaks, and themes are now implemented in a separate local milestone; see [HABITS_AND_THEMES.md](HABITS_AND_THEMES.md). Next implement opt-in push delivery with server scheduling and quiet hours. Add selectable interest-inspired themes and an original daily guessing puzzle; chess and interest-based news follow. None of those features has been added as a nonfunctional placeholder on Today.

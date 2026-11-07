@@ -5,24 +5,26 @@ Lane's Lair is for personal use, with iPhone access first. Its daily loop is Cap
 ## Current baseline
 
 - Authentication and task persistence were saved and pushed in checkpoint `d450d51`.
-- Projects and task-project linking are implemented locally, and the owner reports that manual tests worked. Those changes remain part of the pending working tree.
+- Projects, task linking, Inbox, Today, and installation preparation were saved in checkpoint `d023c12`.
 - The new milestone adds Inbox capture, atomic task conversion, a simpler Today page with daily focus, an Overview page for the original widgets, and iPhone installation assets.
-- The Inbox/focus migration has not been run against Supabase. No deployment, commit, or push was performed for this milestone.
+- The owner deployed the Inbox/Today milestone on Vercel and reported successful sign-in, capture/conversion/focus checks, Home Screen use, and keyboard usability on iPhone.
+- The owner reports successful application of habit migration `002`, working habit/water tracking, and approval of the three themes. The habit page now has one New habit entry point for all habit types.
+- The owner approved publishing this milestone. Check the resulting Vercel deployment on the installed iPhone app after the push.
 
 ## Immediate owner actions
 
-1. Review the new SQL and follow [DAILY_USE_SETUP.md](DAILY_USE_SETUP.md) to apply it once to the correct project.
-2. Sign in locally and verify capture, editing, archive/restore, conversion, daily focus, refresh persistence, and failed-save recovery.
-3. Review and approve a Git checkpoint of the projects and daily-use milestone after those checks.
-4. Choose and approve an HTTPS deployment; test Home Screen installation and keyboard behaviour on the physical iPhone.
+1. Do not rerun the already-applied habit migration. Keep [HABITS_AND_THEMES.md](HABITS_AND_THEMES.md) for new-environment setup and the acceptance checklist.
+2. Sign in locally and verify water/quantity logging, check-ins, optional streaks, archive/restore, historical goals, failed-save retry, and each theme.
+3. Verify that the approved habit/theme checkpoint deployed successfully on Vercel.
+4. Verify the resulting Vercel deployment on the installed iPhone app, including theme persistence and water tracking.
 
 Use the manual checklist in the setup guide. Share error text when a step fails, without credentials or private row contents. Keep the original database setup SQL if you find it; this repository contains only the new migration and the read-only projects inspection query, not the original seven-table setup.
 
 ## Follow-on milestones
 
-1. Persist water intake and let the owner choose a daily target.
+1. Confirm the simplified New habit flow and published water/habit tracking on iPhone.
 2. Add optional task/water push reminders, server-side scheduling, quiet hours, and physical-iPhone delivery testing. Resolve task date/time-zone semantics first.
-3. Add selectable themes inspired by the owner's interests, preserving readable controls and layouts.
+3. Refine the new Classic Lair, Grand Voyage, and Shire Night themes based on daily use.
 4. Add an original daily guessing puzzle, then chess puzzles.
 5. Add interest-based news with source attribution and spoiler controls.
 6. Revisit a dedicated mobile app based on actual limitations of the installed website.
