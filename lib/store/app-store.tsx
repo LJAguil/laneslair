@@ -4,7 +4,7 @@
 // Every mutation goes through `actions`, so components never talk to the
 // database directly.
 //
-// Tasks, projects, habits, Inbox, and daily focus are persisted in Supabase. Everything else
+// Tasks, projects, habits, Inbox, daily focus, and Journal (after migration 004) persist in Supabase. Everything else
 // (goals, events, schedule, notifications, chats) is still
 // local sample data that resets on a full page reload.
 
@@ -12,6 +12,7 @@ import { createContext, useContext, useEffect, useMemo, useReducer, useSyncExter
 import { createHabitActions, initialHabitState, reduceHabits, type HabitAction, type HabitSlice } from "./habit-state";
 import { mergeTaskRead, type TaskWrite } from "./task-read";
 import { createInboxActions, initialInboxState, reduceInbox, type InboxAction, type InboxSlice } from "./inbox-state";
+import { createJournalActions, initialJournalState, reduceJournal, type JournalAction, type JournalSlice } from "./journal-state";
 import * as taskData from "@/lib/data/tasks";
 import { localToday, timestampToLocalDateTime } from "@/lib/dates";
 import { sampleEvents } from "@/lib/sample-data/events";
@@ -40,7 +41,7 @@ export interface Notice {
   message: string;
 }
 
-export interface AppState extends InboxSlice, HabitSlice {
+export interface AppState extends InboxSlice, HabitSlice, JournalSlice {
   /** The user's local calendar day, read once in the browser. */
   today: ISODate;
   tasks: Task[];
@@ -65,6 +66,7 @@ export interface AppState extends InboxSlice, HabitSlice {
 function createInitialState(today: ISODate): AppState {
   return {
     ...initialInboxState,
+    ...initialJournalState,
     ...initialHabitState,
     today,
     tasks: [],
@@ -85,7 +87,7 @@ function createInitialState(today: ISODate): AppState {
   };
 }
 
-type Action = InboxAction | HabitAction
+type Action = InboxAction | HabitAction | JournalAction
   | { type: "projects/loading" }
   | { type: "projects/loaded"; projects: Project[] }
   | { type: "projects/failed"; message: string }
@@ -109,6 +111,8 @@ type Action = InboxAction | HabitAction
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
+    case "journal/index-loading":case "journal/index-error":case "journal/index":case "journal/day-loading":case "journal/day-error":case "journal/entry":case "journal/source":case "journal/draft":case "journal/reset":case "journal/merge":case "journal/pending":case "journal/note-pending":
+      return {...state,...reduceJournal(state,action)};
     case "habits/loading": case "habits/loaded": case "habits/failed": case "habits/saved": case "habits/pending": case "habits/log-failed": case "habits/log-confirmed":
       return { ...state, ...reduceHabits(state, action) };
     case "inbox/loading": case "inbox/loaded": case "inbox/failed": case "inbox/saved": case "inbox/pending":
@@ -213,6 +217,7 @@ function createActions(dispatch: React.Dispatch<Action>) {
   };
 
   return {
+    ...createJournalActions(dispatch,notify),
     ...createHabitActions(dispatch, notify),
     ...createInboxActions((action) => {
       if (action.type === "task/add") recordTaskAction(action);
@@ -394,6 +399,7 @@ function StoreProvider({ today, children }: { today: ISODate; children: ReactNod
     void actions.loadInbox({ showLoading: false });
     void actions.loadFocus({ showLoading: false });
     void actions.loadHabits({ showLoading: false });
+    void actions.loadJournalIndex({ showLoading: false });
   }, [actions]);
 
   return (

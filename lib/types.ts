@@ -148,3 +148,20 @@ export interface DailyFocus {
   taskId: string | null;
   date: ISODate;
 }
+
+export interface JournalEntry {
+  id:string;
+  date:ISODate;
+  body:string;
+  revision:number;
+  createdAt:ISODateTime;
+  updatedAt:ISODateTime;
+}
+export type JournalEntrySummary=Omit<JournalEntry,"body">;
+export interface JournalSource {
+  id:string;
+  noteId:string;
+  entryId:string;
+  date:ISODate;
+  addedAt:ISODateTime;
+}

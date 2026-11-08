@@ -40,3 +40,7 @@ Automated data-access tests use simulated clients. The new Inbox migration is ad
 ## Next approved product direction
 
 See [the ordered roadmap and six copyable prompts](ROADMAP_AND_PROMPTS.md): Journal with one entry per day and Add to journal from Inbox; habit calendar; balanced Statistics including journaling; a multi-game hub with account-synced progress; daily chess with selectable difficulty; and original symbolic-association riddles. These follow-on features are planned, not implemented by the Today/Rune Lock checkpoint.
+
+Milestone 1 is prepared locally: private daily Journal, atomic/idempotent Inbox appends, independent task links and draft/conflict handling. The owner verified the Inbox schema and then applied migration 004 successfully. See [JOURNAL_SETUP.md](JOURNAL_SETUP.md) for phone/two-device checks. The agent has performed no remote SQL, commit, push or deployment for this milestone.
+
+The owner now reports migration 004 successfully applied. Milestone 2 is also implemented locally: Habits/Calendar views, month/date navigation, archived and per-habit filters, and read-only saved-log details with historical targets and explicit no-log/weekly semantics. See [HABIT_CALENDAR.md](HABIT_CALENDAR.md). No new SQL is needed. Journal/calendar publication still needs approval, then physical-iPhone checks; balanced Statistics is the next development milestone afterward.

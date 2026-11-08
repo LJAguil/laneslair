@@ -31,7 +31,7 @@ export function MobileNav() {
             <summary className={cn("flex h-16 cursor-pointer list-none flex-col items-center justify-center gap-1 text-[11px] font-medium [&::-webkit-details-marker]:hidden", moreActive ? "text-accent-strong" : "text-subtle")}>
               <MoreHorizontal className="h-5 w-5" aria-hidden="true" />More
             </summary>
-            <ul className="absolute bottom-full right-2 mb-3 w-56 rounded-xl border border-line bg-panel p-2 shadow-xl">
+            <ul className="absolute bottom-full right-2 mb-3 max-h-[60dvh] w-56 overflow-y-auto rounded-xl border border-line bg-panel p-2 shadow-xl">
               {extra.map(({ href, label, icon: Icon }) => <li key={href}><Link href={href} aria-current={isActivePath(pathname, href) ? "page" : undefined}
                 onClick={() => { if (menu.current) menu.current.open = false; }} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm text-muted hover:bg-hover hover:text-fg">
                 <Icon className="h-4 w-4" aria-hidden="true" />{label}

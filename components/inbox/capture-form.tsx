@@ -60,7 +60,7 @@ export function CaptureForm({ note, onSaved, onSaving, autoFocus = false, compac
       {error && <p id={`${id}-error`} role="alert" className="text-sm text-danger">{error}</p>}
       {conflict && <Button onClick={() => { draftId.current = null; setConflict(false); setError(null); }}>Keep edits as a new capture</Button>}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-subtle">{note ? "Editing this note won’t change its linked task." : "Save it now. Organize it when you’re ready."}</p>
+        <p className="text-xs text-subtle">{note ? "Editing this note won’t change its task or journal copies." : "Save it now. Organize it when you’re ready."}</p>
         <Button type="submit" variant="primary" disabled={saving || !body.trim()} className="h-11">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ArrowDownToLine className="h-4 w-4" aria-hidden="true" />}
           {saving ? "Saving…" : note ? "Save changes" : "Save to Inbox"}

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, Inbox, KeyRound, ListChecks, Target } from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, Inbox, KeyRound, ListChecks, Target } from "lucide-react";
 import Link from "next/link";
 import { useId, useState, type FormEvent } from "react";
 import { useShell } from "@/components/shell/shell-context";
@@ -17,9 +17,10 @@ import { useAppActions, useAppState } from "@/lib/store/app-store";
 import { relevantTasks } from "@/lib/today";
 import { UpcomingReminders } from "./upcoming-reminders";
 import { PuzzleCard } from "@/components/play/puzzle-card";
+import { captureIsUnsorted } from "@/lib/journal";
 
 export function TodayView() {
-  const { today, tasks, tasksStatus, habits, habitsStatus, inboxNotes, inboxStatus, focus } = useAppState();
+  const { today, tasks, tasksStatus, habits, habitsStatus, inboxNotes, inboxStatus, focus,journalSources,journalIndexStatus } = useAppState();
   const { openNewTask } = useShell();
   const focusId = focus?.date === today ? focus.taskId : undefined;
   const upcoming = relevantTasks(tasks, today, focusId ?? undefined);
@@ -27,7 +28,7 @@ export function TodayView() {
   const overdue=tasks.filter(task=>isOpen(task)&&task.dueDate&&task.dueDate<today).length;
   const activeHabits=habits.filter(habit=>habit.isActive);
   const completedHabits=activeHabits.filter(habit=>isCheckedIn(habit,today)).length;
-  const captures=inboxNotes.filter(note=>!note.archivedAt&&!note.convertedAt).length;
+  const captures=inboxNotes.filter(note=>captureIsUnsorted(note,journalSources)).length;
   return (
     <div className="mx-auto max-w-6xl space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -39,7 +40,8 @@ export function TodayView() {
       <nav aria-label="Your day at a glance" className="flex flex-wrap gap-x-5 gap-y-3 text-sm text-muted">
         <Link href="/tasks" className="rounded hover:text-fg hover:underline">{tasksStatus==="ready"?`${dueToday} due today${overdue?` · ${overdue} overdue`:""}`:"Your tasks"}</Link>
         <Link href="/habits" className="rounded hover:text-fg hover:underline">{habitsStatus==="ready"?`${completedHabits}/${activeHabits.length} habit targets reached`:"Your habits"}</Link>
-        <Link href="/inbox" className="rounded hover:text-fg hover:underline">{inboxStatus==="ready"?`${captures} ${captures===1?"thought":"thoughts"} to sort`:"Your Inbox"}</Link>
+        <Link href="/inbox" className="rounded hover:text-fg hover:underline">{inboxStatus==="ready"&&journalIndexStatus==="ready"?`${captures} ${captures===1?"thought":"thoughts"} to sort`:"Your Inbox"}</Link>
+        <Link href="/journal" className="inline-flex items-center gap-1.5 rounded text-accent-strong hover:underline"><BookOpen className="h-3.5 w-3.5" aria-hidden="true" />Journal</Link>
         <Link href="/play" className="inline-flex items-center gap-1.5 rounded text-accent-strong hover:underline"><KeyRound className="h-3.5 w-3.5" aria-hidden="true" />Today’s puzzle</Link>
       </nav>
       <Card>

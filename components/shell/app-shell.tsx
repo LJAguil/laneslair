@@ -14,6 +14,7 @@ import { Sidebar } from "./sidebar";
 import { TopBar } from "./top-bar";
 import { ReminderProvider } from "@/components/reminders/reminder-provider";
 import { PlayProvider } from "@/components/play/play-provider";
+import { JournalDraftGuard } from "@/components/journal/journal-draft-guard";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return <ReminderProvider><PlayProvider><AppShellContent>{children}</AppShellContent></PlayProvider></ReminderProvider>;
@@ -54,6 +55,7 @@ function AppShellContent({ children }: { children: ReactNode }) {
   return (
     <ShellContext.Provider value={controls}>
       <ViewportSync />
+      <JournalDraftGuard />
       <a
         href="#main"
         className="sr-only z-50 rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-on-accent focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
