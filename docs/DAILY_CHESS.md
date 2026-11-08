@@ -1,5 +1,9 @@
 # Daily chess — milestone 5
 
+## Publication update
+
+The owner subsequently applied migration 006 and approved publishing. Checkpoint `1e7befe` was committed/pushed; Vercel confirmed deployment. The implementation details and original validation below remain applicable. Physical-iPhone/two-device acceptance is still an owner check. Echoes is now implemented locally; see [ECHOES.md](ECHOES.md).
+
 ## Status and scope
 
 The owner reports applying migration 005 successfully. Existing milestone-4 files remain in the working tree, uncommitted; this milestone builds on them without resetting or publishing them. No remote SQL, commit, push or deployment was performed for milestone 5. Migration 006 is prepared for separate review. Rune Lock's v1 algorithm, storage keys and all existing history are preserved.

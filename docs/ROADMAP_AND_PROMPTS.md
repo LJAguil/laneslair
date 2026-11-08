@@ -6,7 +6,7 @@ Lane's Lair is a personal daily home base, used primarily from an installed iPho
 
 Keep the three themes, simple Today hierarchy and working persistence/reminders. Daily games should be enjoyable optional destinations, not a collection of dashboard chores. Future native mobile work, news and additional themes can follow these milestones.
 
-Journal/calendar (`bee9e66`) and Statistics (`25c8b8e`) are published; Vercel confirmed both deployments. Milestone 4 is implemented locally with review-only migration 005 and an explicit account-sync import; it is not committed, deployed or remotely activated. See [Daily Play setup](DAILY_PLAY_SYNC.md). The owner reports 005 applied. Milestone 5 is now implemented locally with review-only migration 006; see [Daily chess](DAILY_CHESS.md). Milestones 4–5 are uncommitted/undeployed. Echoes remains planned. Test each milestone on iPhone before building substantially on top of it.
+Journal/calendar (`bee9e66`), Statistics (`25c8b8e`), and the game hub/chess (`1e7befe`) are published; Vercel confirmed deployment. The owner reports migrations 005 and 006 applied. Milestone 6 is implemented locally with 18 original Echoes scenes, three per day, and review-only migration 007; see [Echoes](ECHOES.md). Echoes is uncommitted/undeployed. Test each milestone on iPhone before building substantially on top of it.
 
 ## Ordered roadmap
 

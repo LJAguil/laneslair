@@ -1,5 +1,9 @@
 # Daily Play: hub and account progress
 
+## Publication update
+
+Game hub/sync and chess are now published in `1e7befe` with owner approval; Vercel confirmed deployment. The owner reports 005 and 006 applied. Echoes is implemented locally with review-only 007; see [ECHOES.md](ECHOES.md). The original checkpoint details below describe initial preparation.
+
 ## Status
 
 Statistics checkpoint `25c8b8e` was committed and pushed with owner approval; GitHub reported a successful Vercel deployment. Milestone 4 is local and uncommitted. The owner subsequently reported successfully applying migration 005. No remote game SQL or deployment was executed by the agent. The owner confirmed no game tables were added separately. Existing repository schemas contain no game-progress tables. `docs/inspect-games.sql` is an optional read-only metadata check before activation; conflicting names must be inspected, never dropped to force setup.

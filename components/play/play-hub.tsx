@@ -8,7 +8,6 @@ import { PuzzleCard } from "./puzzle-card";
 import { PlaySyncControls } from "./play-sync-controls";
 export function PlayHub(){return <div className="mx-auto max-w-2xl space-y-5">
   <PageHeader title="Daily Play" description="A quiet moment for a little mystery." />
-  {gameCatalog.map(game=><section key={game.id} aria-label={game.name}>{game.id==="rune-lock"?<PuzzleCard />:<Card><CardHeader title={game.name} description={game.description} /><Link href={game.href} className={buttonClasses("secondary","md","min-h-11")}>Play daily chess</Link></Card>}</section>)}
-  <p className="text-sm text-muted">Echoes is planned. It will appear here when it’s ready to play.</p>
+  {gameCatalog.map(game=><section key={game.id} aria-label={game.name}>{game.id==="rune-lock"?<PuzzleCard />:<Card><CardHeader title={game.name} description={game.description} /><Link href={game.href} className={buttonClasses("secondary","md","min-h-11")}>Play {game.name}</Link></Card>}</section>)}
   <PlaySyncControls />
 </div>;}
