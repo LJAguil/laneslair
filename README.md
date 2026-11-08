@@ -14,6 +14,7 @@ A personal command center for tasks, projects, habits, goals, events, and an AI 
 | Habits | Persistent check-ins, water/quantity targets, optional daily or weekly streaks, archive/restore (habits migration required) |
 | Goals | Sample data; persistent goals are a later milestone |
 | Themes | Classic Lair, Grand Voyage, and Shire Night; saved per browser |
+| Today / Daily Play | clearer daily hierarchy, upcoming reminder preview, and Rune Lock with account-scoped device-local progress; see [setup/test notes](docs/TODAY_AND_PLAY.md) |
 | Events, schedule, notifications | Sample data; changes reset on full refresh |
 | Push reminders | Owner verified manual and scheduled iPhone delivery; local UI update adds reminders in task/habit forms and per-item bell actions |
 | AI assistant | Simulated replies; no model connection |
@@ -146,7 +147,7 @@ Before modifying Next.js behaviour, follow `AGENTS.md` and read the relevant ins
 - Concurrent edits in multiple tabs have no conflict detection or realtime synchronization.
 - Automated tests cover task data handling, with no browser coverage yet.
 - Database setup definitions still need a reviewed, credential-free record in version control.
-- Next: apply the reviewed Inbox/focus migration, manually verify captures and conversion, then approve an HTTPS deployment and test iPhone installation. Persistent water/habits and selectable themes are now implemented locally; apply their reviewed migration and complete the manual checks. Notifications, puzzles, and news follow.
+- The owner has verified Inbox, tasks/projects, focus, habits/water, themes, and scheduled push on the installed iPhone app. The next local milestone improves Today and adds Rune Lock; see [Today and Daily Play](docs/TODAY_AND_PLAY.md) for device-local puzzle storage limitations and the phone checklist. Additional games, puzzle progress sync and interest-based news follow later.
 
 Hosting requires support for the Next.js server because authentication uses Proxy and Server Actions; static file hosting alone is insufficient. Set both public environment variables on the host before building. No deployment was verified during documentation work.
 

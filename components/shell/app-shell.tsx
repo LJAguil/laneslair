@@ -13,9 +13,10 @@ import { ShellContext } from "./shell-context";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./top-bar";
 import { ReminderProvider } from "@/components/reminders/reminder-provider";
+import { PlayProvider } from "@/components/play/play-provider";
 
 export function AppShell({ children }: { children: ReactNode }) {
-  return <ReminderProvider><AppShellContent>{children}</AppShellContent></ReminderProvider>;
+  return <ReminderProvider><PlayProvider><AppShellContent>{children}</AppShellContent></PlayProvider></ReminderProvider>;
 }
 
 function AppShellContent({ children }: { children: ReactNode }) {

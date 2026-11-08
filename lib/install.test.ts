@@ -17,7 +17,7 @@ describe("installation assets and route protection", () => {
   it("allows the static manifest and icons before login while guarding app routes", () => {
     const match = (url: string) => unstable_doesMiddlewareMatch({ config, nextConfig: {}, url });
     for (const path of ["/sw.js", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"]) expect(match(path), path).toBe(false);
-    for (const path of ["/", "/inbox", "/tasks", "/projects", "/sw.js/private", "/manifest.webmanifest/private"]) expect(match(path), path).toBe(true);
+    for (const path of ["/", "/inbox", "/tasks", "/projects", "/play", "/sw.js/private", "/manifest.webmanifest/private"]) expect(match(path), path).toBe(true);
   });
 
   it("uses real full-size PNG assets and a standalone same-origin app scope", () => {

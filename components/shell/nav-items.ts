@@ -1,4 +1,4 @@
-import { BarChart3, Bot, Compass, FolderKanban, Inbox, LayoutDashboard, ListChecks, Target, type LucideIcon } from "lucide-react";
+import { BarChart3, Bot, Compass, FolderKanban, Inbox, KeyRound, LayoutDashboard, ListChecks, Target, type LucideIcon } from "lucide-react";
 
 export interface NavItem {
   href: string;
@@ -15,6 +15,7 @@ export const navItems: NavItem[] = [
   { href: "/projects", label: "Projects", shortLabel: "Projects", icon: FolderKanban },
   { href: "/overview", label: "Overview", shortLabel: "Overview", icon: BarChart3 },
   { href: "/habits", label: "Habits & Goals", shortLabel: "Habits", icon: Target },
+  { href: "/play", label: "Daily Play", shortLabel: "Play", icon: KeyRound },
   { href: "/discover", label: "Discover", shortLabel: "Discover", icon: Compass },
   { href: "/assistant", label: "AI Assistant", shortLabel: "AI", icon: Bot },
 ];

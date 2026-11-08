@@ -70,4 +70,4 @@ Desktop tests and viewport adjustments cannot substitute for this physical-devic
 
 ## Later milestones
 
-Water intake, configurable habit targets, optional streaks, and themes are implemented; see [HABITS_AND_THEMES.md](HABITS_AND_THEMES.md). Optional push delivery, explicit reminder times, zones and quiet hours are now prepared locally; see [PUSH_REMINDERS.md](PUSH_REMINDERS.md) for review, activation and physical-device checks. An original daily guessing puzzle, chess and interest-based news follow later. None has been added as a nonfunctional placeholder on Today.
+Water intake, configurable habit targets, optional streaks, and themes are implemented; see [HABITS_AND_THEMES.md](HABITS_AND_THEMES.md). The owner verified optional manual and scheduled iPhone push; see [PUSH_REMINDERS.md](PUSH_REMINDERS.md) for setup and device checks. The next local milestone improves Today and adds the working Rune Lock daily puzzle; see [TODAY_AND_PLAY.md](TODAY_AND_PLAY.md) for progress storage limitations and its checklist. Additional games, chess and interest-based news follow later.

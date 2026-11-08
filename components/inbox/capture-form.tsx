@@ -10,8 +10,8 @@ import { TaskDataError } from "@/lib/data/tasks";
 import { useAppActions } from "@/lib/store/app-store";
 import type { InboxNote } from "@/lib/types";
 
-export function CaptureForm({ note, onSaved, onSaving, autoFocus = false }: {
-  note?: InboxNote; onSaved?: () => void; onSaving?: (saving: boolean) => void; autoFocus?: boolean;
+export function CaptureForm({ note, onSaved, onSaving, autoFocus = false, compact = false }: {
+  note?: InboxNote; onSaved?: () => void; onSaving?: (saving: boolean) => void; autoFocus?: boolean; compact?: boolean;
 }) {
   const { addCapture, editCapture } = useAppActions();
   const id = useId();
@@ -53,10 +53,10 @@ export function CaptureForm({ note, onSaved, onSaving, autoFocus = false }: {
     <form onSubmit={submit} className="space-y-3" aria-busy={saving}>
       <label htmlFor={id} className="sr-only">{note ? "Edit capture" : "Capture an idea or note"}</label>
       <Textarea id={id} value={body} onChange={(e) => setBody(e.target.value)} maxLength={20000}
-        disabled={saving} autoFocus={autoFocus} rows={note ? 6 : 3}
+        disabled={saving} autoFocus={autoFocus} rows={note ? 6 : compact ? 2 : 3}
         placeholder="An idea, a reminder, a thought… just get it down."
         aria-describedby={error ? `${id}-error` : undefined}
-        className="min-h-28 resize-y text-base" />
+        className={`${compact ? "min-h-20" : "min-h-28"} resize-y text-base`} />
       {error && <p id={`${id}-error`} role="alert" className="text-sm text-danger">{error}</p>}
       {conflict && <Button onClick={() => { draftId.current = null; setConflict(false); setError(null); }}>Keep edits as a new capture</Button>}
       <div className="flex flex-wrap items-center justify-between gap-3">

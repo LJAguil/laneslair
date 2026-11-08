@@ -64,7 +64,7 @@ export function ProjectsCard() {
   );
 }
 
-export function HabitsCard() {
+export function HabitsCard({ limit }: { limit?: number } = {}) {
   const { habits, habitsStatus, today } = useAppState();
   const active = habits.filter((h) => h.isActive);
   const done = active.filter((h) => isCheckedIn(h, today)).length;
@@ -79,10 +79,11 @@ export function HabitsCard() {
       <HabitLoadState />
       {habitsStatus === "ready" && active.length === 0 && <EmptyState title="Make room for a small routine" description="Add water tracking or your own habit on Habits & Goals." />}
       {habitsStatus === "ready" && <ul className="divide-y divide-line/70">
-        {active.map((h) => (
+        {[...active].sort((a,b)=>Number(isCheckedIn(a,today))-Number(isCheckedIn(b,today))).slice(0,limit??active.length).map((h) => (
           <HabitRow key={h.id} habit={h} />
         ))}
       </ul>}
+      {limit&&active.length>limit?<p className="mt-3 text-xs text-subtle">Showing {limit} of {active.length} habits, with unfinished targets first. <Link href="/habits" className="text-accent-strong hover:underline">See all</Link></p>:null}
     </Card>
   );
 }

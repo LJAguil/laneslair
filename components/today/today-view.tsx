@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, Inbox, ListChecks, Target } from "lucide-react";
+import { ArrowRight, CheckCircle2, Inbox, KeyRound, ListChecks, Target } from "lucide-react";
 import Link from "next/link";
 import { useId, useState, type FormEvent } from "react";
 import { useShell } from "@/components/shell/shell-context";
@@ -12,36 +12,57 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Select } from "@/components/ui/field";
 import { TaskDataError } from "@/lib/data/tasks";
 import { formatLongDate } from "@/lib/dates";
-import { isOpen, sortTasks } from "@/lib/selectors";
+import { isCheckedIn, isOpen, sortTasks } from "@/lib/selectors";
 import { useAppActions, useAppState } from "@/lib/store/app-store";
 import { relevantTasks } from "@/lib/today";
+import { UpcomingReminders } from "./upcoming-reminders";
+import { PuzzleCard } from "@/components/play/puzzle-card";
 
 export function TodayView() {
-  const { today, tasks, focus } = useAppState();
+  const { today, tasks, tasksStatus, habits, habitsStatus, inboxNotes, inboxStatus, focus } = useAppState();
   const { openNewTask } = useShell();
   const focusId = focus?.date === today ? focus.taskId : undefined;
   const upcoming = relevantTasks(tasks, today, focusId ?? undefined);
+  const dueToday=tasks.filter(task=>isOpen(task)&&task.dueDate===today).length;
+  const overdue=tasks.filter(task=>isOpen(task)&&task.dueDate&&task.dueDate<today).length;
+  const activeHabits=habits.filter(habit=>habit.isActive);
+  const completedHabits=activeHabits.filter(habit=>isCheckedIn(habit,today)).length;
+  const captures=inboxNotes.filter(note=>!note.archivedAt&&!note.convertedAt).length;
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div><p className="text-sm text-subtle"><time dateTime={today}>{formatLongDate(today)}</time></p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight">Today in the Lair</h1>
-          <p className="mt-2 text-sm text-muted">Clear your head. Choose your next move.</p></div>
+          <p className="mt-2 text-sm text-muted">Capture a thought. Choose one thing. Make a little progress.</p></div>
         <Button onClick={openNewTask}>New task</Button>
       </div>
+      <nav aria-label="Your day at a glance" className="flex flex-wrap gap-x-5 gap-y-3 text-sm text-muted">
+        <Link href="/tasks" className="rounded hover:text-fg hover:underline">{tasksStatus==="ready"?`${dueToday} due today${overdue?` · ${overdue} overdue`:""}`:"Your tasks"}</Link>
+        <Link href="/habits" className="rounded hover:text-fg hover:underline">{habitsStatus==="ready"?`${completedHabits}/${activeHabits.length} habit targets reached`:"Your habits"}</Link>
+        <Link href="/inbox" className="rounded hover:text-fg hover:underline">{inboxStatus==="ready"?`${captures} ${captures===1?"thought":"thoughts"} to sort`:"Your Inbox"}</Link>
+        <Link href="/play" className="inline-flex items-center gap-1.5 rounded text-accent-strong hover:underline"><KeyRound className="h-3.5 w-3.5" aria-hidden="true" />Today’s puzzle</Link>
+      </nav>
       <Card>
-        <CardHeader title="Get it out of your head" description="Ideas don’t need a plan yet." icon={<Inbox className="h-5 w-5" />}
+        <CardHeader title="Quick capture" description="Ideas don’t need a plan yet." icon={<Inbox className="h-5 w-5" aria-hidden="true" />}
           action={<Link href="/inbox" className="text-sm text-accent-strong hover:underline">Inbox</Link>} />
-        <CaptureForm />
+        <CaptureForm compact />
       </Card>
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+      <div className="min-w-0 space-y-5">
       <FocusCard />
+      <HabitsCard limit={3} />
+      </div>
+      <div className="min-w-0 space-y-5">
+      <UpcomingReminders />
       <Card>
         <CardHeader title="On your radar" description="Overdue work, the next 7 days, and important undated tasks."
           icon={<ListChecks className="h-5 w-5" />} />
         <TaskList tasks={upcoming} compact emptyTitle="A little breathing room" emptyDescription="Nothing else urgent or due soon. You can choose any task as your focus." />
         <Link href="/tasks" className={buttonClasses("ghost", "sm", "mt-4 min-h-11")}>All tasks<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
       </Card>
-      <HabitsCard />
+      <PuzzleCard />
+      </div>
+      </div>
       <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-muted">
         <Link href="/projects" className="hover:text-fg hover:underline">Your projects</Link>
         <Link href="/overview" className="hover:text-fg hover:underline">Activity & overview</Link>
@@ -69,7 +90,7 @@ function FocusCard() {
             <TaskList tasks={[task]} compact />
           </>}
           {!task && <p className="text-sm text-muted">{currentId ? "That task is no longer available. Pick a fresh focus." : "Pick one task. The rest can wait their turn."}</p>}
-          <FocusPicker key={`${today}/${currentId ?? "none"}`} currentId={currentId ?? ""} />
+          {currentId?<details key={`${today}/${currentId}`} className="mt-4"><summary className="cursor-pointer rounded-lg py-2 text-sm text-muted hover:text-fg">Change today’s focus</summary><FocusPicker currentId={currentId} /></details>:<FocusPicker key={today} currentId="" />}
         </>}
       </>}
     </Card>

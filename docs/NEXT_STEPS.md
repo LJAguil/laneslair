@@ -25,7 +25,7 @@ Use the manual checklist in the setup guide. Share error text when a step fails,
 1. Confirm the simplified New habit flow and published water/habit tracking on iPhone.
 2. The push foundation is saved in `76ec473`; the owner reports successful migration 003, configured keys, scheduler activation, and manual plus scheduled iPhone delivery. The owner approved publishing the UI follow-up that adds reminders in task/habit forms and per-item bell actions, with device/global preferences kept in Settings. Next verify create/edit/cancel/retry on iPhone after the resulting Vercel deployment. Explicit reminder dates/times remain independent of task due dates. See [PUSH_REMINDERS.md](PUSH_REMINDERS.md).
 3. Refine the new Classic Lair, Grand Voyage, and Shire Night themes based on daily use.
-4. Add an original daily guessing puzzle, then chess puzzles.
+4. The owner approved publishing the [Today and Rune Lock milestone](TODAY_AND_PLAY.md): improved daily layout, upcoming reminder preview and a working daily symbol puzzle. Test on iPhone after an approved push. Puzzle progress is device-local per account; cross-device sync and additional games (including chess) are later additions.
 5. Add interest-based news with source attribution and spoiler controls.
 6. Revisit a dedicated mobile app based on actual limitations of the installed website.
 
@@ -36,3 +36,7 @@ Do not add dummy puzzle, water, news, or notification controls to Today in advan
 The reviewed projects schema permits Active, Paused, Completed, and Archived. Archiving retains tasks, and the existing composite foreign key requires task/project ownership to match. The inspected grants included TRUNCATE for anon and authenticated roles; review that separately. This feature work changes no existing table definitions, grants, or policies.
 
 Automated data-access tests use simulated clients. The new Inbox migration is additionally tested in disposable local PostgreSQL for ownership, rollback, and repeat conversion. Those tests do not verify the live Supabase project, multi-device behaviour, or physical-iPhone installation and delivery.
+
+## Next approved product direction
+
+See [the ordered roadmap and six copyable prompts](ROADMAP_AND_PROMPTS.md): Journal with one entry per day and Add to journal from Inbox; habit calendar; balanced Statistics including journaling; a multi-game hub with account-synced progress; daily chess with selectable difficulty; and original symbolic-association riddles. These follow-on features are planned, not implemented by the Today/Rune Lock checkpoint.
