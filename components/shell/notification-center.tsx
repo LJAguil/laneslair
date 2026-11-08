@@ -52,6 +52,7 @@ export function NotificationCenter() {
               Mark all read
             </button>
           </div>
+          <p className="px-4 pt-3 text-xs text-subtle">Sample activity. Manage real push reminders in <Link href="/settings#notifications" onClick={close} className="text-accent-strong hover:underline">Settings</Link>.</p>
           <ul className="max-h-96 overflow-y-auto py-1">
             {notifications.map((n) => {
               const Icon = kindIcon[n.kind];

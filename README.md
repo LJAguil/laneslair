@@ -15,6 +15,7 @@ A personal command center for tasks, projects, habits, goals, events, and an AI 
 | Goals | Sample data; persistent goals are a later milestone |
 | Themes | Classic Lair, Grand Voyage, and Shire Night; saved per browser |
 | Events, schedule, notifications | Sample data; changes reset on full refresh |
+| Push reminders | Opt-in implementation; owner reports migration 003 and private settings configured; deployment/device verification and scheduler activation pending |
 | AI assistant | Simulated replies; no model connection |
 | Profile/settings | Prototype state held in memory |
 
@@ -149,4 +150,4 @@ Before modifying Next.js behaviour, follow `AGENTS.md` and read the relevant ins
 
 Hosting requires support for the Next.js server because authentication uses Proxy and Server Actions; static file hosting alone is insufficient. Set both public environment variables on the host before building. No deployment was verified during documentation work.
 
-See [the daily-use setup guide](docs/DAILY_USE_SETUP.md) for database setup, deployment, and iPhone tests, and [the next-steps checklist](docs/NEXT_STEPS.md) for the development handoff. No offline support or push notifications are implemented yet.
+See [the daily-use setup guide](docs/DAILY_USE_SETUP.md) for database setup, deployment, and iPhone tests, and [the next-steps checklist](docs/NEXT_STEPS.md) for the development handoff. The [push/reminder guide](docs/PUSH_REMINDERS.md) covers the optional push foundation, reviewable migration 003, private environment variables and proposed free scheduler. It is not activated yet. The push-only service worker never caches private pages; offline support is not implemented.

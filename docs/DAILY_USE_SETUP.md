@@ -6,7 +6,7 @@
 - Inbox supports editing, archiving/restoring, and making a capture into a task with the existing task form.
 - Conversion preserves the note and records its task ID. A transaction and row lock prevent partial conversion and repeated requests from creating another task.
 - Today shows quick capture, one user-chosen focus for the local calendar day, and up to five relevant tasks. Focus persists across refreshes and devices for that day.
-- The manifest and PNG icons prepare Home Screen installation. No service worker is registered; there is no offline capture, private content cache, or push notification implementation.
+- The manifest and PNG icons support Home Screen installation. The next optional push milestone adds a push-only service worker from notification settings, without offline capture or private-content caching. See [PUSH_REMINDERS.md](PUSH_REMINDERS.md) before activation.
 
 ## 1. Review and apply the new database setup
 
@@ -70,4 +70,4 @@ Desktop tests and viewport adjustments cannot substitute for this physical-devic
 
 ## Later milestones
 
-Water intake, configurable habit targets, optional streaks, and themes are now implemented in a separate local milestone; see [HABITS_AND_THEMES.md](HABITS_AND_THEMES.md). Next implement opt-in push delivery with server scheduling and quiet hours. Add selectable interest-inspired themes and an original daily guessing puzzle; chess and interest-based news follow. None of those features has been added as a nonfunctional placeholder on Today.
+Water intake, configurable habit targets, optional streaks, and themes are implemented; see [HABITS_AND_THEMES.md](HABITS_AND_THEMES.md). Optional push delivery, explicit reminder times, zones and quiet hours are now prepared locally; see [PUSH_REMINDERS.md](PUSH_REMINDERS.md) for review, activation and physical-device checks. An original daily guessing puzzle, chess and interest-based news follow later. None has been added as a nonfunctional placeholder on Today.

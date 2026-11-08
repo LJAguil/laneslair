@@ -23,7 +23,7 @@ Use the manual checklist in the setup guide. Share error text when a step fails,
 ## Follow-on milestones
 
 1. Confirm the simplified New habit flow and published water/habit tracking on iPhone.
-2. Add optional task/water push reminders, server-side scheduling, quiet hours, and physical-iPhone delivery testing. Resolve task date/time-zone semantics first.
+2. Review the locally prepared optional push milestone in [PUSH_REMINDERS.md](PUSH_REMINDERS.md): migration 003, private VAPID/worker settings, approved deployment, then separate Supabase Cron activation and physical-iPhone delivery testing. Explicit reminder dates/times are independent of task due dates. The owner reports migration 003 applied and push environment variables configured, and has approved commit/push. Next verify the Vercel deployment and a test notification on the installed iPhone app before separately approving scheduler activation.
 3. Refine the new Classic Lair, Grand Voyage, and Shire Night themes based on daily use.
 4. Add an original daily guessing puzzle, then chess puzzles.
 5. Add interest-based news with source attribution and spoiler controls.
