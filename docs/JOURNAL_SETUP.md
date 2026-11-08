@@ -2,7 +2,7 @@
 
 ## Current state
 
-The owner approved publishing the Journal and calendar checkpoint; physical-phone Journal checks remain pending. The agent has not executed remote SQL, changed existing Supabase data/policies, deployed, committed, or pushed this milestone. At inspection, the owner supplied the read-only `docs/inspect-journal.sql` report: Inbox matched migration 001, had ownership RLS and no triggers, and the three journal tables did not exist. The owner subsequently reported that migration 004 ran successfully. Do not rerun it for the calendar milestone; live Journal UI/phone checks are still separate from that schema confirmation.
+Journal/calendar checkpoint bee9e66 was committed and pushed with owner approval; Vercel confirmed the deployment completed. Physical-phone Journal checks remain pending. The agent has not executed remote SQL or changed existing Supabase data/policies. At inspection, the owner supplied the read-only `docs/inspect-journal.sql` report: Inbox matched migration 001, had ownership RLS and no triggers, and the three journal tables did not exist. The owner subsequently reported that migration 004 ran successfully. Do not rerun it for the calendar milestone; live Journal UI/phone checks are still separate from that schema confirmation.
 
 The typed data layer uses the existing Supabase browser client and verified-ID store convention. Mutations additionally derive ownership inside PostgreSQL from `auth.uid()`. No new packages, environment variables, service-role key, password, AI provider, cache, or scheduler configuration is needed.
 

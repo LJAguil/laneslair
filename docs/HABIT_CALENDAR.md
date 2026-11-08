@@ -2,7 +2,7 @@
 
 ## Scope and setup
 
-Milestone 2 is implemented locally. It uses the existing owned `habits` and paginated `habit_logs` data loaded into the React store. No new SQL, packages, environment variables, sample records, reminders or database writes are introduced. The owner reports Journal migration 004 applied successfully; the the owner approved publishing the Journal and calendar UI changes; phone verification remains pending.
+Milestone 2 is published in checkpoint bee9e66; Vercel confirmed the deployment completed. It uses the existing owned `habits` and paginated `habit_logs` data loaded into the React store. No new SQL, packages, environment variables, sample records, reminders or database writes are introduced. The owner reports Journal migration 004 applied successfully; the owner approved publishing the Journal and calendar UI changes; phone verification remains pending.
 
 Open **Habits & Goals → Calendar**. The existing **Habits** view remains the default, with the same quantity/check-in controls, reminder bells, archive/restore actions and single New habit button. Calendar selection never changes a log. To record/edit progress, return to the Habits view and use the existing supported controls.
 
@@ -43,4 +43,4 @@ After a separately approved push and successful Vercel deployment:
 8. Refresh and check the same stored amounts are unchanged. Navigation/filtering must create no new logs. Calendar view/filter/month selection isn't persisted and can reset when switching views or reloading.
 9. If loading fails, use Retry habit history; do not interpret the error as no records or seed data to make the grid populate. Existing ownership/RLS and data-layer errors remain authoritative.
 
-Final local verification passed: `npm test` (**205 tests across 30 files**, including pending Journal work), `npm run lint` (no errors/warnings), `npm run build`, and `npx tsc --noEmit`. No physical-iPhone calendar test has been performed by the agent. No remote SQL, commit, push or deployment was performed.
+Final local verification passed: `npm test` (**205 tests across 30 files**, including pending Journal work), `npm run lint` (no errors/warnings), `npm run build`, and `npx tsc --noEmit`. No physical-iPhone calendar test has been performed by the agent. No remote SQL was performed by the agent. The owner subsequently approved commit/push and Vercel deployment; the Statistics follow-up remains separate.
