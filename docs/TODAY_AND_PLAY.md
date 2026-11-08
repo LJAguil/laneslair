@@ -13,6 +13,10 @@ The owner approved committing and pushing this milestone for Vercel deployment a
 - The preview accounts for DST: nonexistent local times are skipped; repeated times use the later/standard occurrence, matching the scheduling rules. Existing device-calendar habit dates are unchanged.
 - Radar retains its overdue/next-seven-days/important-undated rules. Daily Play has a compact card and a direct link at the top. Desktop uses two columns; phone layout is a single reading order: capture, focus, habits, reminders, radar, play.
 
+## Milestone 4 follow-up (local, not published)
+
+`/play` is now a compact hub and `/play/rune-lock` is the dedicated working game. Today links directly to Rune Lock. Original v1 rules and storage keys are preserved. Explicit account sync/import is prepared but remains inactive until migration 005 is reviewed/applied and the owner confirms each device’s preview. See [Daily Play sync setup](DAILY_PLAY_SYNC.md) for authoritative current activation, conflict and two-device guidance. The original checkpoint description below records the original local-only behavior.
+
 ## Rune Lock
 
 Daily Play is `/play`, reachable from Today, the desktop sidebar and mobile More menu. The four main mobile destinations stay Today/Inbox/Tasks/Projects. Existing authentication guards `/play` too.

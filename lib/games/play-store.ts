@@ -38,6 +38,7 @@ export function createPlayStore(accountId:string,storage:PlayStorage) {
     hint:(day:string)=>persist(revealHint(snapshot.progress,day)),
     streak:(showStreak:boolean)=>persist({...snapshot.progress,showStreak}),
     retry:()=>persist(snapshot.progress),
+    merge:(progress:PlayProgress)=>persist(mergePlayProgress(snapshot.progress,progress)),
   };
 }
 export type PlayStore=ReturnType<typeof createPlayStore>;

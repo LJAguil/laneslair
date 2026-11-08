@@ -1,0 +1,13 @@
+export const DIFFICULTIES=["beginner","intermediate","advanced"] as const;
+export type Difficulty=typeof DIFFICULTIES[number];
+export interface ChessPuzzle {id:string;difficulty:Difficulty;fen:string;setup?:string;line:readonly string[];explanation:string;source:{name:string;url:string;license:string;rating?:number}}
+const lichess=(id:string,rating:number)=>({name:`Lichess ${id}`,url:`https://lichess.org/training/${id}`,license:"CC0-1.0",rating});
+/** Frozen v1 order/content. New or corrected content requires a new pack version. */
+export const CHESS_PACK:readonly ChessPuzzle[]=[
+ {id:"lair-rook-net",difficulty:"beginner",fen:"7k/5K2/8/8/8/8/8/R7 w - - 0 1",line:["a1h1"],explanation:"The rook checks along the h-file. Your king covers g8 and g7, so the black king has no escape.",source:{name:"Lane’s Lair composed position",url:"https://creativecommons.org/publicdomain/zero/1.0/",license:"CC0-1.0"}},
+ {id:"00sO1",difficulty:"beginner",fen:"1k1r4/pp3pp1/2p1p3/4b3/P3n1P1/8/KPP2PN1/3rBR1R b - - 2 31",setup:"b8c7",line:["e1a5","b7b6","f1d1"],explanation:"Moving the bishop to a5 discovers the rook’s attack down the first rank and attacks d8. After ...b6, Rxd1 wins the exposed rook.",source:lichess("00sO1",998)},
+ {id:"lair-promotion-net",difficulty:"intermediate",fen:"7k/5P2/6K1/8/8/8/8/8 w - - 0 1",line:["f7f8q"],explanation:"Promotion gives check along the eighth rank. The king on g6 covers h7 and g7. Promoting to either queen or rook mates; bishop or knight does not.",source:{name:"Lane’s Lair composed position",url:"https://creativecommons.org/publicdomain/zero/1.0/",license:"CC0-1.0"}},
+ {id:"00sHx",difficulty:"intermediate",fen:"q3k1nr/1pp1nQpp/3p4/1P2p3/4P3/B1PP1b2/B5PP/5K2 b k - 0 17",setup:"e8d7",line:["a2e6","d7d8","f7f8"],explanation:"Be6+ drives the king to d8. Qf8# then checks along the eighth rank. The bishop on e6 covers c8 and d7, taking away the king’s escape squares.",source:lichess("00sHx",1760)},
+ {id:"00sJb",difficulty:"advanced",fen:"Q1b2r1k/p2np2p/5bp1/q7/5P2/4B3/PPP3PP/2KR1B1R w - - 1 17",setup:"d1d7",line:["a5e1","d7d1","e1e3","c1b1","e3b6"],explanation:"...Qe1+ forces the rook back to d1. ...Qxe3+ takes the bishop with tempo; after Kb1, ...Qb6 saves the queen and leaves Black with the gained material.",source:lichess("00sJb",2235)},
+ {id:"00sJ9",difficulty:"advanced",fen:"r3r1k1/p4ppp/2p2n2/1p6/3P1qb1/2NQR3/PPB2PP1/R1B3K1 w - - 5 18",setup:"e3g3",line:["e8e1","g1h2","e1c1","a1c1","f4h6","h2g1","h6c1"],explanation:"...Re1+ attracts the king to h2. The rook captures on c1, drawing the other rook there. ...Qh6+ then forks king and rook along the diagonal, and ...Qxc1 wins it.",source:lichess("00sJ9",2671)},
+];

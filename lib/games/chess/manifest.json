@@ -1,0 +1,72 @@
+[
+  {
+    "id": "lair-rook-net",
+    "difficulty": "beginner",
+    "index": 0,
+    "paths": [
+      [
+        "a1h1"
+      ]
+    ]
+  },
+  {
+    "id": "00sO1",
+    "difficulty": "beginner",
+    "index": 1,
+    "paths": [
+      [
+        "e1a5",
+        "f1d1"
+      ]
+    ]
+  },
+  {
+    "id": "lair-promotion-net",
+    "difficulty": "intermediate",
+    "index": 0,
+    "paths": [
+      [
+        "f7f8r"
+      ],
+      [
+        "f7f8q"
+      ]
+    ]
+  },
+  {
+    "id": "00sHx",
+    "difficulty": "intermediate",
+    "index": 1,
+    "paths": [
+      [
+        "a2e6",
+        "f7f8"
+      ]
+    ]
+  },
+  {
+    "id": "00sJb",
+    "difficulty": "advanced",
+    "index": 0,
+    "paths": [
+      [
+        "a5e1",
+        "e1e3",
+        "e3b6"
+      ]
+    ]
+  },
+  {
+    "id": "00sJ9",
+    "difficulty": "advanced",
+    "index": 1,
+    "paths": [
+      [
+        "e8e1",
+        "e1c1",
+        "f4h6",
+        "h6c1"
+      ]
+    ]
+  }
+]

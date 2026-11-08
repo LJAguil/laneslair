@@ -1,0 +1,27 @@
+import { readFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+import { PGlite } from "@electric-sql/pglite";
+import { beforeAll,beforeEach,afterAll,describe,it,expect } from "vitest";
+import { dailyLock, RUNES } from "@/lib/games/rune-lock";
+const A="11111111-1111-4111-8111-111111111111",B="22222222-2222-4222-8222-222222222222",DAY="2026-11-08";
+let db:PGlite;
+beforeAll(async()=>{db=new PGlite();await db.exec(`create role authenticated;create role anon;create schema auth;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth,public to authenticated,anon;insert into auth.users values('${A}'),('${B}');`);await db.exec(readFileSync(new URL('../../database/migrations/20261108_005_game_progress.sql',import.meta.url),'utf8'));},30000);
+beforeEach(async()=>{await db.exec('reset role;truncate public.game_progress,public.game_preferences,public.game_write_operations;');await as(A);});
+afterAll(async()=>{await db?.close();});
+async function as(id:string){await db.exec('reset role;set role authenticated');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);}
+const state=(guesses:string[][]=[],hintUsed=false)=>({guesses,hintUsed});
+const wrong=()=>RUNES.map(rune=>[rune,rune,rune,rune]).filter(guess=>guess.join()!==dailyLock(DAY).join());
+async function submit(value:unknown,id=randomUUID(),date=DAY){return db.query('select public.submit_rune_progress($1,$2,$3::jsonb)',[id,date,JSON.stringify(value)]);}
+async function pref(show:boolean,revision:number|null=null,id=randomUUID()){return db.query('select public.set_game_streak($1,$2,$3)',[id,show,revision]);}
+async function saved(){return (await db.query<{state:{guesses:string[][];hintUsed:boolean};revision:number}>('select state,revision from public.game_progress')).rows;}
+describe('game sync SQL (temporary local PostgreSQL, not remote)',()=>{
+  it('matches the published unsigned v1 answer across leap/year boundaries',async()=>{await db.exec('reset role');for(const date of ['2026-11-07','2026-11-08','2024-02-29','2026-12-31','2027-01-01','2000-01-01'])expect((await db.query<{answer:string[]}>('select public.rune_v1_answer($1) answer',[date])).rows[0].answer).toEqual(dailyLock(date));});
+  it('isolates accounts and refuses direct writes even to owned rows',async()=>{await submit(state([wrong()[0]]));await pref(true);await as(B);expect(await saved()).toEqual([]);expect((await db.query('select * from public.game_preferences')).rows).toEqual([]);await expect(db.query(`insert into public.game_progress(user_id,game_id,puzzle_version,puzzle_date,difficulty,state) values('${A}','rune-lock',1,'${DAY}','standard','{}')`)).rejects.toThrow(/permission/);await submit(state([wrong()[1]]));expect(await saved()).toHaveLength(1);await as(A);expect((await saved())[0].state.guesses).toEqual([wrong()[0]]);});
+  it('blocks anonymous RPCs, receipt reads and unauthenticated owners',async()=>{await expect(db.query('select * from public.game_write_operations')).rejects.toThrow(/permission/);await as('');await expect(submit(state())).rejects.toThrow(/Sign in/);await db.exec('reset role;set role anon');await expect(submit(state())).rejects.toThrow(/permission/);});
+  it('combines compatible stale devices and hint usage without rolling back longer history',async()=>{await submit(state([wrong()[0],wrong()[1]]));await submit(state([],true));await submit(state([wrong()[0]]));const row=(await saved())[0];expect(row.state).toEqual(state([wrong()[0],wrong()[1]],true));expect(Number(row.revision)).toBe(2);});
+  it('rejects divergent device histories and preserves the stored branch',async()=>{await submit(state([wrong()[0]]));await expect(submit(state([wrong()[1]]))).rejects.toThrow(/Conflicting/);expect((await saved())[0].state).toEqual(state([wrong()[0]]));});
+  it('makes retries idempotent and rejects reused operation IDs',async()=>{const id=randomUUID();await submit(state([wrong()[0]]),id);await submit(state([wrong()[0],wrong()[1]]));await submit(state([wrong()[0]]),id);expect(Number((await saved())[0].revision)).toBe(2);await expect(submit(state([],true),id)).rejects.toThrow(/reused/);});
+  it('keeps solved guesses immutable and rejects duplicate/invalid/post-solve guesses',async()=>{await submit(state([dailyLock(DAY)]));for(const value of [state([dailyLock(DAY),wrong()[0]]),state([wrong()[0],wrong()[0]]),state([['bad','key','key','key']]),{guesses:[],hintUsed:null}])await expect(submit(value)).rejects.toThrow();await submit(state());expect((await saved())[0].state.guesses).toEqual([dailyLock(DAY)]);});
+  it('allows distinct permutations (JSON containment must not collapse guess order)',async()=>{const a=['key','flame','leaf','moon'],b=['flame','key','leaf','moon'];await submit(state([a,b]));expect((await saved())[0].state.guesses).toHaveLength(2);});
+  it('keeps dates independent, preference revisions explicit and retries safe',async()=>{await submit(state([wrong()[0]]));await submit(state([],true),randomUUID(),'2026-11-09');expect(await saved()).toHaveLength(2);const id=randomUUID();await pref(true,null,id);await pref(false,1);await pref(true,null,id);expect((await db.query<{show_streak:boolean}>('select * from public.game_preferences')).rows[0].show_streak).toBe(false);await expect(pref(true,1)).rejects.toThrow(/changed/);});
+});

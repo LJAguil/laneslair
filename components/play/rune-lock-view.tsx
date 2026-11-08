@@ -10,6 +10,7 @@ import { clueFor, dailyLock, finished, LOCK_SIZE, MAX_GUESSES, puzzleStreak, RUN
 import { cn } from "@/lib/utils";
 import { usePlay } from "./play-provider";
 import { RuneIcon, runeName } from "./runes";
+import { PlaySyncControls } from "./play-sync-controls";
 
 const clueText:Record<Clue,string>={exact:"Right rune, right position",present:"In the lock, different position",absent:"No remaining match"};
 const clueStyle:Record<Clue,string>={exact:"border-success/60 bg-success/10 text-success",present:"border-warning/60 bg-warning/10 text-warning",absent:"border-line bg-raised text-subtle"};
@@ -20,6 +21,7 @@ export function RuneLockView(){
     {status==="loading"&&<Card><p role="status" className="text-sm text-muted">Loading today’s puzzle…</p></Card>}
     {error&&<div role="alert" className="space-y-2 rounded-xl border border-warning/40 bg-panel p-4"><p className="text-sm text-warning">{error}</p><Button onClick={retry}><RotateCcw className="h-4 w-4" aria-hidden="true" />Retry {status==="ready"?"saving":"loading"}</Button></div>}
     {status==="ready"&&<LockGame key={today} day={today} />}
+    <PlaySyncControls />
   </div>;
 }
 function LockGame({day}:{day:string}){
@@ -70,7 +72,7 @@ function LockGame({day}:{day:string}){
     <Card className="space-y-3">
       <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm"><input className="h-5 w-5 accent-[var(--color-accent)]" type="checkbox" checked={progress.showStreak} onChange={event=>store!.streak(event.target.checked)} /><span>Show my puzzle streak</span></label>
       {progress.showStreak&&<p className="flex items-center gap-2 text-sm text-muted"><Flame className="h-4 w-4 text-warning" aria-hidden="true" />{puzzleStreak(progress,day)} consecutive {puzzleStreak(progress,day)===1?"day":"days"} solved</p>}
-      <p className="text-xs leading-relaxed text-subtle">Submitted guesses and your streak preference save on this device for your account. They don’t sync between devices yet. A fresh lock arrives at your device’s local midnight. Clearing site data clears this history. Hints still count as a solve.</p>
+      <p className="text-xs leading-relaxed text-subtle">Submitted guesses and your streak preference save on this device for your account. Account sync is optional: preview and connect below. Until connected, they don’t sync between devices yet. A fresh lock arrives at your device’s local midnight. Clearing site data clears local history. Hints still count as a solve.</p>
     </Card>
   </>;
 }

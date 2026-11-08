@@ -14,7 +14,7 @@ describe("Daily Play entry points and accessible markup (simulated)",()=>{
   it("offers a real protected destination without changing the four primary mobile destinations",()=>{
     expect(navItems.slice(0,4).map(item=>item.href)).toEqual(["/","/inbox","/tasks","/projects"]);
     expect(navItems.find(item=>item.href==="/play")?.label).toBe("Daily Play");
-    expect(renderToStaticMarkup(createElement(PuzzleCard))).toContain('href="/play"');
+    expect(renderToStaticMarkup(createElement(PuzzleCard))).toContain('href="/play/rune-lock"');
   });
   it("explains repeats and local persistence, names every input, and starts streaks opted out",()=>{
     const html=renderToStaticMarkup(createElement(RuneLockView));

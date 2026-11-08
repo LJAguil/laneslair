@@ -4,7 +4,7 @@
 
 The owner approved publishing Journal and the habit calendar. Checkpoint `bee9e66` was committed/pushed, and GitHub's Vercel status confirmed **Deployment has completed** for SHA `bee9e66c1555bc1e967ffbca212ed352a3e0f987`. The owner reported migration 004 already applied. No remote migration was executed by the agent. Physical phone/two-device acceptance remains an owner check.
 
-Milestone 3 (Statistics) is local and uncommitted. It adds `/statistics` to the sidebar and phone More menu, keeps the four primary phone destinations, and leaves `/overview` intact as the existing widget dashboard. Statistics is for recorded history/metrics, with a link back to Overview. It adds no SQL, dependency, environment variable, external analytics service, chart library, deployment or sample records.
+Milestone 3 (Statistics) is published in checkpoint `25c8b8e`; Vercel confirmed Deployment has completed. It adds `/statistics` to the sidebar and phone More menu, keeps the four primary phone destinations, and leaves `/overview` intact as the existing widget dashboard. Statistics is for recorded history/metrics, with a link back to Overview. It adds no SQL, dependency, environment variable, external analytics service, chart library, deployment or sample records.
 
 ## Data and privacy
 
@@ -47,7 +47,7 @@ If the owner wants true completion-event totals, deleted-item history, or histor
 
 ## Verification and phone checklist
 
-Tests use simulated database clients/metadata and rendered markup, not live account content or a physical iPhone. They cover owned selection, text-column exclusion, pagination, per-source failures, archived records, snapshot targets, missing versus zero logs, distinct journal dates, reopened/cancelled tasks, leap/year/DST boundaries, quantity-unit separation, denominators, range calculations/navigation markup, accessible tables and immutable inputs. Final checks: `npm test` passed all 223 tests across 33 files; `npm run lint`, `npm run build`, and `npx tsc --noEmit` passed. The final lint check reported no warnings. Statistics remains local and uncommitted pending approval.
+Tests use simulated database clients/metadata and rendered markup, not live account content or a physical iPhone. They cover owned selection, text-column exclusion, pagination, per-source failures, archived records, snapshot targets, missing versus zero logs, distinct journal dates, reopened/cancelled tasks, leap/year/DST boundaries, quantity-unit separation, denominators, range calculations/navigation markup, accessible tables and immutable inputs. Final checks: `npm test` passed all 223 tests across 33 files; `npm run lint`, `npm run build`, and `npx tsc --noEmit` passed. The final lint check reported no warnings. Statistics was subsequently committed/pushed with approval in `25c8b8e` and Vercel confirmed deployment.
 
 After separately approving the Statistics commit/push/deployment:
 

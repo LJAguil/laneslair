@@ -42,7 +42,7 @@ export function TodayView() {
         <Link href="/habits" className="rounded hover:text-fg hover:underline">{habitsStatus==="ready"?`${completedHabits}/${activeHabits.length} habit targets reached`:"Your habits"}</Link>
         <Link href="/inbox" className="rounded hover:text-fg hover:underline">{inboxStatus==="ready"&&journalIndexStatus==="ready"?`${captures} ${captures===1?"thought":"thoughts"} to sort`:"Your Inbox"}</Link>
         <Link href="/journal" className="inline-flex items-center gap-1.5 rounded text-accent-strong hover:underline"><BookOpen className="h-3.5 w-3.5" aria-hidden="true" />Journal</Link>
-        <Link href="/play" className="inline-flex items-center gap-1.5 rounded text-accent-strong hover:underline"><KeyRound className="h-3.5 w-3.5" aria-hidden="true" />Today’s puzzle</Link>
+        <Link href="/play/rune-lock" className="inline-flex items-center gap-1.5 rounded text-accent-strong hover:underline"><KeyRound className="h-3.5 w-3.5" aria-hidden="true" />Today’s puzzle</Link>
       </nav>
       <Card>
         <CardHeader title="Quick capture" description="Ideas don’t need a plan yet." icon={<Inbox className="h-5 w-5" aria-hidden="true" />}

@@ -11,13 +11,14 @@ A personal command center for tasks, projects, habits, goals, events, and an AI 
 | Inbox | Text capture, editing, archive/restore, and atomic task conversion (new migration required) |
 | Journal | Published: one private entry per date, safe Inbox appends and edit-conflict recovery; owner reports migration 004 applied ([setup](docs/JOURNAL_SETUP.md)) |
 | Habit calendar | Published read-only month view of actual saved habit logs/targets, archived filtering and date details; no new SQL ([guide](docs/HABIT_CALENDAR.md)) |
-| Statistics | Local 7/30/90-day journal/habit/quantity/current-task metrics from owned metadata; explicitly limited history and accessible tables ([guide](docs/STATISTICS.md)) |
+| Statistics | Published 7/30/90-day journal/habit/quantity/current-task metrics from owned metadata; explicitly limited history and accessible tables ([guide](docs/STATISTICS.md)) |
 | Today | Quick capture, persisted daily focus, and a short task radar (new migration required for focus) |
 | Projects | Supabase creation/editing, Active/Paused/Completed/Archived statuses, task links and progress |
 | Habits | Persistent check-ins, water/quantity targets, optional daily or weekly streaks, archive/restore (habits migration required) |
 | Goals | Sample data; persistent goals are a later milestone |
 | Themes | Classic Lair, Grand Voyage, and Shire Night; saved per browser |
-| Today / Daily Play | clearer daily hierarchy, upcoming reminder preview, and Rune Lock with account-scoped device-local progress; see [setup/test notes](docs/TODAY_AND_PLAY.md) |
+| Today / Daily Play | Published Today/Rune Lock; local milestone 4 adds the hub and optional account sync; owner reports migration 005 applied ([sync setup](docs/DAILY_PLAY_SYNC.md)) |
+| Daily chess | Local milestone 5: selectable difficulty, bundled tactics, accessible board and optional sync; migration 006 is review-only ([guide](docs/DAILY_CHESS.md)) |
 | Events, schedule, notifications | Sample data; changes reset on full refresh |
 | Push reminders | Owner verified manual and scheduled iPhone delivery; local UI update adds reminders in task/habit forms and per-item bell actions |
 | AI assistant | Simulated replies; no model connection |

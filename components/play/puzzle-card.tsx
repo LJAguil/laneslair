@@ -14,6 +14,6 @@ export function PuzzleCard(){
     <CardHeader title="A little play" description="Rune Lock · your daily puzzle" icon={<KeyRound className="h-[18px] w-[18px]" aria-hidden="true" />} />
     <p className="text-sm text-muted">{status==="loading"?"Loading your lock…":status==="error"?"Open Daily Play to retry loading your progress.":won?`Lock opened in ${day.guesses.length} ${day.guesses.length===1?"guess":"guesses"}. Nicely done.`:complete?"Today’s lock is finished. A fresh challenge arrives tomorrow.":day?.guesses.length?`${day.guesses.length} of ${MAX_GUESSES} guesses used. Pick up where you left off.`:"Four runes. Six guesses. A small mystery for a quiet moment."}</p>
     {error&&status==="ready"&&<p className="mt-2 text-xs text-warning">Puzzle progress isn’t saved right now.</p>}
-    <Link href="/play" className={buttonClasses("secondary","sm","mt-4 min-h-11")}>{complete?"View today’s lock":day?.guesses.length?"Continue puzzle":"Play today’s lock"}<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+    <Link href="/play/rune-lock" className={buttonClasses("secondary","sm","mt-4 min-h-11")}>{complete?"View today’s lock":day?.guesses.length?"Continue puzzle":"Play today’s lock"}<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
   </Card>;
 }
