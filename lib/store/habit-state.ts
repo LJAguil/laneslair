@@ -64,8 +64,10 @@ export function createHabitActions(dispatch: (action: HabitAction) => void, noti
     },
     async addHabit(id: string, input: data.HabitInput) {
       return withHabit(id, async () => {
-        save(await data.createHabit(await getVerifiedUserId(),id,input));
+        const habit=await data.createHabit(await getVerifiedUserId(),id,input);
+        save(habit);
         notify("success", "Habit created");
+        return habit;
       });
     },
     async editHabit(habit: Habit, input: data.HabitInput) {
@@ -74,6 +76,7 @@ export function createHabitActions(dispatch: (action: HabitAction) => void, noti
         const current = latest.get(habit.id) ?? habit;
         const saved = await data.updateHabit(await getVerifiedUserId(),current,input);
         save(saved); notify("success", "Habit saved");
+        return saved;
       });
     },
     async archiveHabit(habit: Habit, active: boolean) {

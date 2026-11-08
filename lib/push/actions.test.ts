@@ -53,4 +53,18 @@ describe('authenticated push actions',()=>{
     const result=await loadNotificationSettings(DEVICE);expect(result.ok).toBe(false);
     if(!result.ok){expect(result.error).toMatch(/migration 003/);expect(result.error).not.toMatch(/private details/);}
   });
+  it('reuses an owned item reminder after an uncertain insert instead of creating a second rule',async()=>{
+    replies.push({data:{id:DEVICE},error:null},{data:{id:DEVICE,task_id:USER},error:null});
+    expect((await saveReminder(null,{task_id:USER,habit_id:null,enabled:true,local_date:'2027-01-01',local_time:'09:00',time_zone:'UTC'})).ok).toBe(true);
+    expect(calls.filter(c=>c.method==='insert')).toHaveLength(0);
+    expect(calls).toContainEqual({table:'reminder_rules',method:'eq',args:['user_id',USER]});
+    expect(calls).toContainEqual({table:'reminder_rules',method:'eq',args:['task_id',USER]});
+    expect(calls).toContainEqual({table:'reminder_rules',method:'eq',args:['id',DEVICE]});
+  });
+  it('recovers a concurrent insert using the unique owned item link',async()=>{
+    replies.push({data:null,error:null},{data:null,error:{code:'23505'}},{data:{id:DEVICE},error:null},{data:{id:DEVICE},error:null});
+    expect((await saveReminder(null,{task_id:USER,habit_id:null,enabled:true,local_date:'2027-01-01',local_time:'09:00',time_zone:'UTC'})).ok).toBe(true);
+    expect(calls.filter(c=>c.method==='insert')).toHaveLength(1);
+    expect(calls.filter(c=>c.method==='update')).toHaveLength(1);
+  });
 });

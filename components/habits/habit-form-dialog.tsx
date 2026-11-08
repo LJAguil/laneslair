@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { TaskDataError } from "@/lib/data/tasks";
-import { useAppActions } from "@/lib/store/app-store";
+import { useAppActions, useAppState } from "@/lib/store/app-store";
+import { useReminderDraft } from "@/components/reminders/use-reminder-draft";
+import { ReminderFields } from "@/components/reminders/reminder-fields";
 import type { AccentColor, Habit, HabitFrequency, HabitTracking } from "@/lib/types";
 
 export function HabitFormDialog({ open, habit, onClose }: { open: boolean; habit?: Habit; onClose: () => void }) {
@@ -19,6 +21,7 @@ export function HabitFormDialog({ open, habit, onClose }: { open: boolean; habit
 
 function HabitForm({ habit, onClose, onSaving }: { habit?: Habit; onClose: () => void; onSaving: (saving: boolean) => void }) {
   const { addHabit, editHabit } = useAppActions();
+  const { habits } = useAppState();
   const id = useId();
   const requestId = useRef<string | null>(null);
   const inFlight = useRef(false);
@@ -33,6 +36,9 @@ function HabitForm({ habit, onClose, onSaving }: { habit?: Habit; onClose: () =>
   const [color,setColor] = useState<AccentColor>(habit?.color ?? "violet");
   const [error,setError] = useState<string | null>(null);
   const [saving,setSaving] = useState(false);
+  const createdHabit=useRef<Habit|null>(null);
+  const [partiallySaved,setPartiallySaved]=useState(false);
+  const reminder=useReminderDraft("habit",habit?.id);
   const hasHistory = !!habit && Object.keys(habit.days).length > 0;
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -41,8 +47,14 @@ function HabitForm({ habit, onClose, onSaving }: { habit?: Habit; onClose: () =>
     const input = { name, description, trackingType, frequency, targetPerWeek: Number(targetPerWeek), dailyTarget: trackingType === "check" ? 1 : Number(target), unit, streakEnabled: streak, color };
     inFlight.current = true; setSaving(true); onSaving(true); setError(null);
     try {
-      if (habit) await editHabit(habit,input);
-      else { requestId.current ??= crypto.randomUUID(); await addHabit(requestId.current,input); }
+      reminder.validate();
+      const previous=habit??(createdHabit.current?habits.find(h=>h.id===createdHabit.current!.id)??createdHabit.current:null);
+      let saved:Habit;
+      if (previous) saved=await editHabit(previous,input);
+      else { requestId.current ??= crypto.randomUUID(); saved=await addHabit(requestId.current,input); }
+      createdHabit.current=saved;setPartiallySaved(true);
+      try {await reminder.saveDraft(saved.id);}
+      catch(error){throw new TaskDataError(`Habit saved, but its reminder wasn’t saved. ${error instanceof Error?error.message:"Try again."} Retrying will update this habit, not create another.`);}
       onSaving(false); onClose();
     } catch (err) { setError(err instanceof TaskDataError ? err.message : "Couldn't save this habit. Your changes are still here."); setSaving(false); onSaving(false); }
     finally { inFlight.current = false; }
@@ -64,7 +76,8 @@ function HabitForm({ habit, onClose, onSaving }: { habit?: Habit; onClose: () =>
       {hasHistory && <p className="text-xs leading-relaxed text-muted">Type, units, and schedule stay fixed to protect your history. Daily target changes apply to days you haven’t logged yet; existing days keep their saved target.</p>}
       <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line p-3"><input type="checkbox" checked={streak} onChange={(e) => setStreak(e.target.checked)} className="mt-1 h-5 w-5 accent-[var(--color-accent)]" /><span><span className="block text-sm font-medium">Show a {frequency === "daily" ? "daily" : "weekly"} streak</span><span className="text-xs text-muted">Turn it off any time. Your progress and history will still be saved.</span></span></label>
       <Field label="Color" htmlFor={`${id}-color`}><Select id={`${id}-color`} value={color} onChange={(e) => setColor(e.target.value as AccentColor)}>{["violet","blue","emerald","amber","rose","cyan"].map((c) => <option key={c} value={c}>{c[0].toUpperCase()+c.slice(1)}</option>)}</Select></Field>
+      <ReminderFields kind="habit" value={reminder.value} onChange={reminder.onChange} status={reminder.status} error={reminder.error} onRetry={()=>void reminder.reload()} preferences={reminder.preferences} />
     </fieldset>
-    <div className="flex justify-end gap-2"><Button variant="ghost" disabled={saving} onClick={onClose}>Cancel</Button><Button type="submit" variant="primary" disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}{saving ? "Saving…" : habit ? "Save changes" : "Create habit"}</Button></div>
+    <div className="flex justify-end gap-2"><Button variant="ghost" disabled={saving} onClick={onClose}>{partiallySaved?"Close":"Cancel"}</Button><Button type="submit" variant="primary" disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}{saving ? "Saving…" : habit||partiallySaved ? "Save changes" : "Create habit"}</Button></div>
   </form>;
 }

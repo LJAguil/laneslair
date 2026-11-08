@@ -271,6 +271,7 @@ function createActions(dispatch: React.Dispatch<Action>) {
       const userId = await taskData.getVerifiedUserId();
       const task = await taskData.createTask(userId, input);
       recordTaskAction({ type: "task/add", task });
+      return task;
     },
     /**
      * Saves edits to an existing task (by its id — never creates a new one).

@@ -8,10 +8,12 @@ import { applicationKey, deviceId, pushRegistration, pushSupport } from "@/lib/p
 import { loadNotificationSettings, registerPushDevice, removePushDevice, testPushDevice } from "@/lib/push/actions";
 import type { DeviceSubscription } from "@/lib/push/types";
 import { ReminderSettings } from "./reminder-settings";
+import { useReminders } from "@/components/reminders/reminder-provider";
 
 type Settings = Extract<Awaited<ReturnType<typeof loadNotificationSettings>>, { ok: true }>["data"];
 
 export function PushSettings() {
+  const reminders=useReminders();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [support, setSupport] = useState<string | null>(null);
@@ -107,6 +109,6 @@ export function PushSettings() {
     {problem && <p role="alert" className="text-sm text-danger">{problem}</p>}
     {notice && <p role="status" className="text-sm text-success">{notice}</p>}
     <p className="text-xs text-subtle">Disable before sharing this device. Browser permission stays granted after disabling. Expired subscriptions need Enable again. Reminders require the separate server scheduler setup; an open app is not required.</p>
-    {settings && <ReminderSettings initial={settings.preferences} rules={settings.rules} onSaved={load} />}
+    {settings && <ReminderSettings initial={settings.preferences} onSaved={async()=>{await load();await reminders.reload();}} />}
   </Card>;
 }

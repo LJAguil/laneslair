@@ -13,6 +13,7 @@ import { useAppActions, useAppState } from "@/lib/store/app-store";
 import type { ISODate, Project, Task } from "@/lib/types";
 import { accentClasses, cn } from "@/lib/utils";
 import { TaskFormDialog } from "./task-form-dialog";
+import { ReminderButton } from "@/components/reminders/reminder-button";
 
 interface TaskListProps {
   tasks: Task[];
@@ -111,7 +112,7 @@ export function TaskRow({ task, today, project, compact, pending, onToggle, onEd
   const overdue = isOverdue(task, today);
 
   return (
-    <li className="group flex items-start gap-3 py-3 first:pt-0 last:pb-0" aria-busy={pending || undefined}>
+    <li className="group grid grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-x-3 gap-y-2 py-3 first:pt-0 last:pb-0 sm:flex sm:gap-3" aria-busy={pending || undefined}>
       <CheckCircle
         checked={done}
         onChange={onToggle}
@@ -144,7 +145,9 @@ export function TaskRow({ task, today, project, compact, pending, onToggle, onEd
           )}
         </div>
       </div>
+      <div className="col-start-2 flex flex-wrap items-center justify-end gap-1 sm:contents">
       {cancelled ? <Badge>Cancelled</Badge> : !done && <PriorityBadge priority={task.priority} />}
+      <ReminderButton kind="task" id={task.id} name={task.title} disabled={pending} />
       {onEdit && (
         <RowAction label={`Edit “${task.title}”`} onClick={onEdit} disabled={pending}>
           <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
@@ -161,6 +164,7 @@ export function TaskRow({ task, today, project, compact, pending, onToggle, onEd
           <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
       )}
+      </div>
     </li>
   );
 }

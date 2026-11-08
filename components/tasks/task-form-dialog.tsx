@@ -10,6 +10,8 @@ import { TaskDataError } from "@/lib/data/tasks";
 import { addDays } from "@/lib/dates";
 import { useAppActions, useAppState } from "@/lib/store/app-store";
 import type { InboxNote, Priority, Task, TaskStatus } from "@/lib/types";
+import { useReminderDraft } from "@/components/reminders/use-reminder-draft";
+import { ReminderFields } from "@/components/reminders/reminder-fields";
 
 interface TaskFormDialogProps {
   open: boolean;
@@ -67,7 +69,7 @@ const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
 ];
 
 function TaskForm({ task, capture, onCancel, onDone, onSavingChange }: TaskFormProps) {
-  const { today, projects, projectsStatus, projectsError } = useAppState();
+  const { today, tasks, projects, projectsStatus, projectsError } = useAppState();
   const { addTask, editTask, loadProjects, convertCapture } = useAppActions();
   const id = useId();
   const editing = !!task;
@@ -85,6 +87,9 @@ function TaskForm({ task, capture, onCancel, onDone, onSavingChange }: TaskFormP
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const submitting = useRef(false);
+  const createdTask = useRef<Task | null>(null);
+  const reminder = useReminderDraft("task",task?.id);
+  const [partiallySaved,setPartiallySaved] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -99,14 +104,25 @@ function TaskForm({ task, capture, onCancel, onDone, onSavingChange }: TaskFormP
     onSavingChange(true);
     setSaveError(null);
     try {
+      reminder.validate();
       // Notes are optional: an empty or whitespace-only value is saved as "".
       const fields = { title: trimmed, priority, dueDate: dueDate || undefined, notes, projectId: projectId || undefined };
-      if (task) {
-        await editTask(task, { ...fields, status });
+      const previous = task ?? (createdTask.current ? tasks.find(t=>t.id===createdTask.current!.id)??createdTask.current : null);
+      let saved = previous;
+      if (previous) {
+        await editTask(previous, { ...fields, status });
       } else if (capture) {
-        await convertCapture(capture, fields);
+        saved=await convertCapture(capture, fields);
       } else {
-        await addTask(fields);
+        saved=await addTask(fields);
+      }
+      if(saved){
+        createdTask.current=saved;
+        setPartiallySaved(true);
+        try { await reminder.saveDraft(saved.id); }
+        catch(error){throw new TaskDataError(`Task saved, but its reminder wasn’t saved. ${error instanceof Error?error.message:"Try again."} Retrying will update this task, not create another.`);}
+      } else if(reminder.value.enabled) {
+        throw new TaskDataError("This capture’s task was already removed. Its reminder cannot be saved.");
       }
       onSavingChange(false);
       onDone(trimmed, !task);
@@ -204,15 +220,17 @@ function TaskForm({ task, capture, onCancel, onDone, onSavingChange }: TaskFormP
       <Field label="Notes" htmlFor={`${id}-notes`} hint="Optional">
         <Textarea id={`${id}-notes`} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional details" />
       </Field>
+      <ReminderFields kind="task" value={reminder.value} onChange={reminder.onChange} status={reminder.status} error={reminder.error}
+        onRetry={()=>void reminder.reload()} preferences={reminder.preferences} />
 
       </fieldset>
       <div className="flex justify-end gap-2 pt-1">
         <Button variant="ghost" onClick={onCancel} disabled={saving}>
-          Cancel
+          {partiallySaved ? "Close" : "Cancel"}
         </Button>
         <Button type="submit" variant="primary" disabled={saving}>
           {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-          {saving ? "Saving…" : editing ? "Save changes" : "Add task"}
+          {saving ? "Saving…" : editing || partiallySaved ? "Save changes" : "Add task"}
         </Button>
       </div>
     </form>

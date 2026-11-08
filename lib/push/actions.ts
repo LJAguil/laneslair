@@ -94,10 +94,22 @@ export async function saveReminder(id: string | null, rule: Omit<ReminderRule,"i
   return result(async () => {
     validateReminder(rule); if (id) uuid(id);
     const { db, userId } = await account();
+    const itemColumn = rule.task_id ? "task_id" : "habit_id";
+    const itemId = rule.task_id ?? rule.habit_id;
+    async function findExisting() {
+      const found=await db.from("reminder_rules").select("id").eq("user_id",userId).eq(itemColumn,itemId).maybeSingle();
+      databaseError(found.error);return found.data?.id as string|undefined;
+    }
+    // An earlier insert may have succeeded even if its response never reached the form.
+    let ruleId=id??await findExisting();
     const values = { enabled: rule.enabled, local_date: rule.local_date, local_time: rule.local_time, time_zone: rule.time_zone };
-    const query = id ? db.from("reminder_rules").update(values).eq("id", id).eq("user_id", userId)
-      : db.from("reminder_rules").insert({ user_id: userId, task_id: rule.task_id, habit_id: rule.habit_id, ...values });
-    const saved = await query.select("id,task_id,habit_id,enabled,local_date,local_time,time_zone").single();
+    async function write() {
+      const query = ruleId ? db.from("reminder_rules").update(values).eq("id", ruleId).eq("user_id", userId).eq(itemColumn,itemId)
+        : db.from("reminder_rules").insert({ user_id: userId, task_id: rule.task_id, habit_id: rule.habit_id, ...values });
+      return query.select("id,task_id,habit_id,enabled,local_date,local_time,time_zone").single();
+    }
+    let saved=await write();
+    if(saved.error?.code==="23505"&&!ruleId){ruleId=await findExisting();if(ruleId)saved=await write();}
     databaseError(saved.error); return saved.data as ReminderRule;
   });
 }

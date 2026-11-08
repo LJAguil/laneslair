@@ -15,7 +15,7 @@ A personal command center for tasks, projects, habits, goals, events, and an AI 
 | Goals | Sample data; persistent goals are a later milestone |
 | Themes | Classic Lair, Grand Voyage, and Shire Night; saved per browser |
 | Events, schedule, notifications | Sample data; changes reset on full refresh |
-| Push reminders | Opt-in implementation; owner reports migration 003 and private settings configured; deployment/device verification and scheduler activation pending |
+| Push reminders | Owner verified manual and scheduled iPhone delivery; local UI update adds reminders in task/habit forms and per-item bell actions |
 | AI assistant | Simulated replies; no model connection |
 | Profile/settings | Prototype state held in memory |
 
@@ -142,7 +142,7 @@ Before modifying Next.js behaviour, follow `AGENTS.md` and read the relevant ins
 ## Limitations and roadmap
 
 - Due dates use local-noon timestamps; crossing time zones can change the displayed day. Set explicit date/time rules before reminders.
-- The current day updates on focus/visibility changes and about once a minute while open. Habit logs use the device's local calendar day; the prototype Settings time zone does not override it.
+- The current day updates on focus/visibility changes and about once a minute while open. Habit logs use the device's local calendar day; reminder/quiet-hours time zones do not override the habit tracking day.
 - Concurrent edits in multiple tabs have no conflict detection or realtime synchronization.
 - Automated tests cover task data handling, with no browser coverage yet.
 - Database setup definitions still need a reviewed, credential-free record in version control.
@@ -150,4 +150,4 @@ Before modifying Next.js behaviour, follow `AGENTS.md` and read the relevant ins
 
 Hosting requires support for the Next.js server because authentication uses Proxy and Server Actions; static file hosting alone is insufficient. Set both public environment variables on the host before building. No deployment was verified during documentation work.
 
-See [the daily-use setup guide](docs/DAILY_USE_SETUP.md) for database setup, deployment, and iPhone tests, and [the next-steps checklist](docs/NEXT_STEPS.md) for the development handoff. The [push/reminder guide](docs/PUSH_REMINDERS.md) covers the optional push foundation, reviewable migration 003, private environment variables and proposed free scheduler. It is not activated yet. The push-only service worker never caches private pages; offline support is not implemented.
+See [the daily-use setup guide](docs/DAILY_USE_SETUP.md) for database setup, deployment, and iPhone tests, and [the next-steps checklist](docs/NEXT_STEPS.md) for the development handoff. The [push/reminder guide](docs/PUSH_REMINDERS.md) covers the optional push foundation, reviewable migration 003, private environment variables and proposed free scheduler. The owner has verified scheduled delivery on iPhone; the next local change improves where reminders are configured. The push-only service worker never caches private pages; offline support is not implemented.

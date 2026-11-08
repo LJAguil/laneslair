@@ -104,6 +104,7 @@ export function createInboxActions(dispatch: Dispatch, notify: (kind: "success" 
         saved(result.note);
         if (result.task) dispatch({ type: "task/add", task: result.task });
         notify("success", result.task ? "Task saved — original capture kept in Inbox" : "This capture was already converted; its task has since been removed.");
+        return result.task;
       });
     },
     async loadFocus({ showLoading = true } = {}) {

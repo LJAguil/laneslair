@@ -12,6 +12,7 @@ import { habitStreak, isCheckedIn } from "@/lib/selectors";
 import { useAppActions, useAppState } from "@/lib/store/app-store";
 import type { Habit } from "@/lib/types";
 import { accentClasses, cn } from "@/lib/utils";
+import { ReminderButton } from "@/components/reminders/reminder-button";
 
 export function HabitRow({ habit, showWeek = false, onEdit }: { habit: Habit; showWeek?: boolean; onEdit?: () => void }) {
   const { recordHabit } = useAppActions();
@@ -47,6 +48,7 @@ export function HabitRow({ habit, showWeek = false, onEdit }: { habit: Habit; sh
       <div className="min-w-0 flex-1"><p className="flex items-start gap-2 break-words text-sm font-medium"><span aria-hidden="true" className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full",accentClasses[habit.color].dot)} />{habit.name}</p><p className="mt-0.5 text-xs text-subtle">{habit.frequency === "daily" ? "Every day" : `${habit.targetPerWeek} successful days per week`}{habit.frequency !== "daily" && ` · ${habitWeekCount(habit,today)} this week`}</p></div>
       {habit.streakEnabled && <span className={cn("inline-flex shrink-0 items-center gap-1 text-xs",streak > 0 ? "text-warning" : "text-subtle")} title={`${streak} ${streakUnit(habit)} streak`}><Flame className="h-4 w-4" aria-hidden="true" />{streak} {streakUnit(habit)}{streak === 1 ? "" : "s"}</span>}
       {onEdit && <Button size="icon-sm" variant="ghost" onClick={onEdit} disabled={locked} aria-label={`Edit ${habit.name}`}><Pencil className="h-4 w-4" aria-hidden="true" /></Button>}
+      <ReminderButton kind="habit" id={habit.id} name={habit.name} disabled={busy||!habit.isActive} />
     </div>
     {habit.trackingType === "quantity" ? <>
       <div className="flex flex-wrap items-baseline justify-between gap-2"><p className="text-sm"><span className="font-semibold">{amountLabel(day.amount,habit.unit)}</span><span className="text-muted"> / {amountLabel(day.target,habit.unit)}</span></p>{checked && <span className="text-xs text-success">Target reached</span>}</div>

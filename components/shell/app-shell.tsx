@@ -12,8 +12,13 @@ import { SearchDialog } from "./search-dialog";
 import { ShellContext } from "./shell-context";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./top-bar";
+import { ReminderProvider } from "@/components/reminders/reminder-provider";
 
 export function AppShell({ children }: { children: ReactNode }) {
+  return <ReminderProvider><AppShellContent>{children}</AppShellContent></ReminderProvider>;
+}
+
+function AppShellContent({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [newTaskOpen, setNewTaskOpen] = useState(false);
