@@ -150,6 +150,7 @@ export interface DailyFocus {
 }
 
 export interface JournalEntry {
+  usesAdditions?:boolean;
   id:string;
   date:ISODate;
   body:string;

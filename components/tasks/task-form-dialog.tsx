@@ -224,7 +224,7 @@ function TaskForm({ task, capture, onCancel, onDone, onSavingChange }: TaskFormP
         onRetry={()=>void reminder.reload()} preferences={reminder.preferences} />
 
       </fieldset>
-      <div className="flex justify-end gap-2 pt-1">
+      <div className="task-form-actions flex justify-end gap-2 pt-1">
         <Button variant="ghost" onClick={onCancel} disabled={saving}>
           {partiallySaved ? "Close" : "Cancel"}
         </Button>

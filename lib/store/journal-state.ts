@@ -3,17 +3,24 @@ import { getVerifiedUserId, TaskDataError } from "@/lib/data/tasks";
 import { appendJournalBody, journalBody, journalDirty } from "@/lib/journal";
 import type { InboxNote, JournalEntry, JournalEntrySummary, JournalSource } from "@/lib/types";
 
+import type { AdditionDraft,JournalAddition } from "@/lib/data/journal-additions";
+
 type Status="loading"|"ready"|"error";
 export interface JournalDraft {body:string;base:JournalEntry|null;missingSavedEntry?:boolean}
 export interface JournalSlice {
+  journalAdditionDrafts:Record<string,AdditionDraft>;
   journalSources:JournalSource[];journalDates:JournalEntrySummary[];
   journalIndexStatus:Status;journalIndexError:string|null;
   journalEntries:Record<string,JournalEntry|null>;
   journalDayStatus:Record<string,Status>;journalDayErrors:Record<string,string|null>;
   journalDrafts:Record<string,JournalDraft>;pendingJournalDates:string[];pendingJournalNotes:string[];
 }
-export const initialJournalState:JournalSlice={journalSources:[],journalDates:[],journalIndexStatus:"loading",journalIndexError:null,journalEntries:{},journalDayStatus:{},journalDayErrors:{},journalDrafts:{},pendingJournalDates:[],pendingJournalNotes:[]};
+export const initialJournalState:JournalSlice={journalAdditionDrafts:{},journalSources:[],journalDates:[],journalIndexStatus:"loading",journalIndexError:null,journalEntries:{},journalDayStatus:{},journalDayErrors:{},journalDrafts:{},pendingJournalDates:[],pendingJournalNotes:[]};
 export type JournalAction=
+  |{type:"journal/addition-draft";key:string;body:string;base?:JournalAddition;newId:string;operationId:string}
+  |{type:"journal/addition-clear";key:string;body?:string}
+  |{type:"journal/addition-rebase";key:string;base:JournalAddition;operationId:string}
+
   |{type:"journal/index-loading"}|{type:"journal/index-error";message:string}
   |{type:"journal/index";dates:JournalEntrySummary[];sources:JournalSource[]}
   |{type:"journal/day-loading";date:string}|{type:"journal/day-error";date:string;message:string}
@@ -28,6 +35,9 @@ function summaries(dates:JournalEntrySummary[],date:string,entry:JournalEntry|nu
 }
 export function reduceJournal(state:JournalSlice,action:JournalAction):JournalSlice {
   switch(action.type){
+    case "journal/addition-draft":{const old=state.journalAdditionDrafts[action.key];if(old?.body===action.body)return state;return {...state,journalAdditionDrafts:{...state.journalAdditionDrafts,[action.key]:{id:old?.id??action.base?.id??action.newId,body:action.body,baseBody:old?.baseBody??action.base?.body??"",revision:old?.revision??action.base?.revision??null,operationId:action.operationId}}};}
+    case "journal/addition-rebase":{const draft=state.journalAdditionDrafts[action.key];if(!draft||draft.id!==action.base.id)return state;return {...state,journalAdditionDrafts:{...state.journalAdditionDrafts,[action.key]:{...draft,baseBody:action.base.body,revision:action.base.revision,operationId:action.operationId}}};}
+    case "journal/addition-clear":{if(action.body!==undefined&&state.journalAdditionDrafts[action.key]?.body!==action.body)return state;const drafts={...state.journalAdditionDrafts};delete drafts[action.key];return {...state,journalAdditionDrafts:drafts};}
     case "journal/index-loading":return {...state,journalIndexStatus:"loading",journalIndexError:null};
     case "journal/index-error":return {...state,journalIndexStatus:"error",journalIndexError:action.message};
     case "journal/index":return {...state,journalIndexStatus:"ready",journalIndexError:null,journalDates:action.dates,journalSources:action.sources};
@@ -60,6 +70,9 @@ export function createJournalActions(dispatch:(action:JournalAction)=>void,notif
   const pendingDates=new Set<string>(),pendingNotes=new Set<string>(),requests=new Map<string,data.JournalSaveRequest>();
   function publish(entry:JournalEntry|null,date:string,submittedBody?:string){writes.set(date,{revision:++revision,entry});dispatch({type:"journal/entry",date,entry,submittedBody});}
   return {
+    setJournalAdditionDraft(key:string,body:string,base?:JournalAddition){dispatch({type:"journal/addition-draft",key,body,base,newId:crypto.randomUUID(),operationId:crypto.randomUUID()});},
+    rebaseJournalAdditionDraft(key:string,base:JournalAddition){dispatch({type:"journal/addition-rebase",key,base,operationId:crypto.randomUUID()});},
+    clearJournalAdditionDraft(key:string,body?:string){dispatch({type:"journal/addition-clear",key,body});},
     async loadJournalIndex({showLoading=true}={}){
       const sequence=++indexRead,start=revision;if(showLoading)dispatch({type:"journal/index-loading"});
       try{

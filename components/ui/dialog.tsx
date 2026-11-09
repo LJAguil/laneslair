@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
+import { KeyboardControls } from "./keyboard-controls";
 
 interface DialogProps {
   open: boolean;
@@ -32,7 +33,8 @@ export function Dialog({ open, onClose, title, description, children, className,
       dialog.showModal();
       // showModal() focuses the first focusable element (the close button), so move
       // focus to the first form field instead — that's what users want to type into.
-      dialog.querySelector<HTMLElement>("input, textarea, select")?.focus();
+      const field=dialog.querySelector<HTMLElement>("input:not([disabled]), textarea:not([disabled]), select:not([disabled])");
+      if(field&&document.activeElement!==field)field.focus({preventScroll:true});
     }
     if (!open && dialog.open) dialog.close();
   }, [open]);
@@ -68,6 +70,7 @@ export function Dialog({ open, onClose, title, description, children, className,
             </Button>
           </div>
           {children}
+          <KeyboardControls inDialog />
         </div>
       )}
     </dialog>

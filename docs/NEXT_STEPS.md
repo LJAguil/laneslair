@@ -51,3 +51,8 @@ Journal/calendar checkpoint `bee9e66` is now pushed and Vercel confirmed Deploym
 ## Echoes checkpoint (local)
 
 With owner approval, the game hub/account sync and chess were published in `1e7befe`; Vercel confirmed deployment. The owner reports migration 006 applied. Echoes now adds 18 original scenes / three daily rounds, saved word-bank answers/hints, optional streaks and per-game account-sync preparation. See [ECHOES.md](ECHOES.md) for review-only migration 007 and phone checks. No remote SQL, Echoes commit or deployment has been performed.
+
+
+## Privacy milestone (proposal)
+
+See [PRIVACY_MILESTONE.md](PRIVACY_MILESTONE.md) for staged access hardening, client-side journal encryption, user-held key recovery, safe migration and future AI boundaries. Planning only: no encryption or remote migration was performed. Migration 008 is a timestamping feature, not a privacy upgrade. Supabase administration requires its own authorized connection; phone access to Codex alone does not provide it.

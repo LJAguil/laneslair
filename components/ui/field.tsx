@@ -2,7 +2,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const controlClasses =
-  "w-full rounded-lg border border-line bg-raised px-3 text-sm text-fg placeholder:text-subtle transition-colors hover:border-line-strong focus-visible:border-accent";
+  "w-full rounded-lg border border-line bg-raised px-3 text-base sm:text-sm text-fg placeholder:text-subtle transition-colors hover:border-line-strong focus-visible:border-accent";
 
 export function Input({ className, ...props }: ComponentProps<"input">) {
   return <input className={cn(controlClasses, "h-10", className)} {...props} />;

@@ -9,7 +9,7 @@ A personal command center for tasks, projects, habits, goals, events, and an AI 
 | Authentication | Supabase email/password login, protected routes, sign-out; no public signup UI |
 | Tasks | Persistent creation, editing, completion/reopening, deletion, filters, and save errors |
 | Inbox | Text capture, editing, archive/restore, and atomic task conversion (new migration required) |
-| Journal | Published: one private entry per date, safe Inbox appends and edit-conflict recovery; owner reports migration 004 applied ([setup](docs/JOURNAL_SETUP.md)) |
+| Journal | Timestamped editable additions (migration 008 applied) and phone typing improvements; [guide](docs/PHONE_TYPING_AND_JOURNAL_ADDITIONS.md). Published: one private entry per date, safe Inbox appends and edit-conflict recovery; owner reports migration 004 applied ([setup](docs/JOURNAL_SETUP.md)) |
 | Habit calendar | Published read-only month view of actual saved habit logs/targets, archived filtering and date details; no new SQL ([guide](docs/HABIT_CALENDAR.md)) |
 | Statistics | Published 7/30/90-day journal/habit/quantity/current-task metrics from owned metadata; explicitly limited history and accessible tables ([guide](docs/STATISTICS.md)) |
 | Today | Quick capture, persisted daily focus, and a short task radar (new migration required for focus) |

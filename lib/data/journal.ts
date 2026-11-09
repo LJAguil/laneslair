@@ -5,12 +5,12 @@ import { journalBody, validJournalDate } from "@/lib/journal";
 import { uuid } from "@/lib/push/validation";
 import type { JournalEntry, JournalEntrySummary, JournalSource } from "@/lib/types";
 
-export interface JournalRow {id:string;user_id:string;entry_date:string;body:string;revision:number;created_at:string;updated_at:string}
+export interface JournalRow {uses_additions?:boolean;id:string;user_id:string;entry_date:string;body:string;revision:number;created_at:string;updated_at:string}
 export interface JournalSourceRow {id:string;user_id:string;note_id:string;entry_id:string;entry_date:string;added_at:string}
 export interface JournalSaveRequest {id:string;date:string;expectedRevision:number|null;body:string}
 export class JournalConflictError extends TaskDataError {}
 const SUMMARY="id,entry_date,revision,created_at,updated_at";
-export function entryFromRow(row:JournalRow):JournalEntry {return {id:row.id,date:row.entry_date,body:row.body,revision:Number(row.revision),createdAt:row.created_at,updatedAt:row.updated_at};}
+export function entryFromRow(row:JournalRow):JournalEntry {return {...(row.uses_additions!==undefined?{usesAdditions:row.uses_additions}:{}),id:row.id,date:row.entry_date,body:row.body,revision:Number(row.revision),createdAt:row.created_at,updatedAt:row.updated_at};}
 export function sourceFromRow(row:JournalSourceRow):JournalSource {return {id:row.id,noteId:row.note_id,entryId:row.entry_id,date:row.entry_date,addedAt:row.added_at};}
 function checkDate(date:string){if(!validJournalDate(date))throw new TaskDataError("Choose a valid journal date.");}
 function fail(error:PostgrestError):never {

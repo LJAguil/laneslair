@@ -53,7 +53,7 @@ export function CaptureForm({ note, onSaved, onSaving, autoFocus = false, compac
     <form onSubmit={submit} className="space-y-3" aria-busy={saving}>
       <label htmlFor={id} className="sr-only">{note ? "Edit capture" : "Capture an idea or note"}</label>
       <Textarea id={id} value={body} onChange={(e) => setBody(e.target.value)} maxLength={20000}
-        disabled={saving} autoFocus={autoFocus} rows={note ? 6 : compact ? 2 : 3}
+        disabled={saving} autoCapitalize="sentences" spellCheck enterKeyHint="enter" autoFocus={autoFocus} rows={note ? 6 : compact ? 2 : 3}
         placeholder="An idea, a reminder, a thought… just get it down."
         aria-describedby={error ? `${id}-error` : undefined}
         className={`${compact ? "min-h-20" : "min-h-28"} resize-y text-base`} />

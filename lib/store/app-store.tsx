@@ -111,7 +111,7 @@ type Action = InboxAction | HabitAction | JournalAction
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
-    case "journal/index-loading":case "journal/index-error":case "journal/index":case "journal/day-loading":case "journal/day-error":case "journal/entry":case "journal/source":case "journal/draft":case "journal/reset":case "journal/merge":case "journal/pending":case "journal/note-pending":
+    case "journal/addition-draft":case "journal/addition-clear":case "journal/addition-rebase":case "journal/index-loading":case "journal/index-error":case "journal/index":case "journal/day-loading":case "journal/day-error":case "journal/entry":case "journal/source":case "journal/draft":case "journal/reset":case "journal/merge":case "journal/pending":case "journal/note-pending":
       return {...state,...reduceJournal(state,action)};
     case "habits/loading": case "habits/loaded": case "habits/failed": case "habits/saved": case "habits/pending": case "habits/log-failed": case "habits/log-confirmed":
       return { ...state, ...reduceHabits(state, action) };

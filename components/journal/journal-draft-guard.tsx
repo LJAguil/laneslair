@@ -5,8 +5,8 @@ import { journalDirty } from "@/lib/journal";
 
 /** Best effort only: iPhone can terminate a Home Screen app without firing beforeunload. */
 export function JournalDraftGuard(){
-  const {journalDrafts}=useAppState();
-  const dirty=Object.values(journalDrafts).some(draft=>journalDirty(draft.body,draft.base));
+  const {journalDrafts,journalAdditionDrafts}=useAppState();
+  const dirty=Object.values(journalDrafts).some(draft=>journalDirty(draft.body,draft.base))||Object.values(journalAdditionDrafts).some(draft=>draft.body!==draft.baseBody);
   useEffect(()=>{
     if(!dirty)return;
     const warn=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue="";};

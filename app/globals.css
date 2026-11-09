@@ -133,3 +133,57 @@ dialog {
   --color-accent-soft: rgb(182 203 139 / 0.13);
   --color-on-accent: #182217;
 }
+
+/* Keyboard controls follow the visual viewport, including Safari's vertical pan.
+   No forced page/caret scrolling, no zoom lock, and no text persistence. */
+.keyboard-controls { display: none; }
+@media (max-width: 1023px) and (pointer: coarse) {
+  html[data-keyboard-open="true"] .keyboard-controls {
+    position: fixed;
+    z-index: 60;
+    top: calc(var(--app-visual-top, 0px) + var(--app-visual-height, 100dvh) - 3.5rem);
+    left: max(0.5rem, env(safe-area-inset-left));
+    right: max(0.5rem, env(safe-area-inset-right));
+    display: flex;
+    height: 3rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 0.75rem;
+    background: var(--color-panel);
+    padding: 0 0.5rem 0 0.75rem;
+    box-shadow: 0 2px 12px rgb(0 0 0 / 0.2);
+  }
+  /* Native dialogs are in the top layer; use their own dismiss control. */
+  body:has(dialog[open]) .keyboard-controls-global { display: none; }
+  html[data-keyboard-open="true"] dialog {
+    position: fixed;
+    top: calc(var(--app-visual-top, 0px) + 0.5rem);
+    bottom: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    max-height: calc(var(--app-visual-height, 100dvh) - 4.5rem);
+  }
+  html[data-keyboard-open="true"] .app-main { padding-bottom: 5rem; }
+  html[data-keyboard-open="true"] .app-toast {
+    top: calc(var(--app-visual-top, 0px) + 0.5rem);
+    bottom: auto;
+  }
+  html[data-keyboard-open="true"] .journal-writing {
+    min-height: 8rem;
+    max-height: max(8rem, calc(var(--app-visual-height, 100dvh) - 8rem));
+  }
+  html[data-keyboard-open="true"] { scroll-padding-bottom: 4rem; }
+}
+@media (max-width: 1023px) and (pointer: coarse) {
+  html[data-keyboard-open="true"] .task-form-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    margin: 0 -0.25rem;
+    border-top: 1px solid var(--color-line);
+    background: var(--color-panel);
+    padding: 0.75rem 0.25rem 0.25rem;
+  }
+}

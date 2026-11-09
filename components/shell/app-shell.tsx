@@ -6,6 +6,7 @@ import { CaptureDialog } from "@/components/inbox/capture-form";
 import { TaskFormDialog } from "@/components/tasks/task-form-dialog";
 import { useAppActions, useAppState } from "@/lib/store/app-store";
 import { cn } from "@/lib/utils";
+import { KeyboardControls } from "@/components/ui/keyboard-controls";
 import { ViewportSync } from "./viewport-sync";
 import { MobileNav } from "./mobile-nav";
 import { SearchDialog } from "./search-dialog";
@@ -72,6 +73,7 @@ function AppShellContent({ children }: { children: ReactNode }) {
         </div>
       </div>
       <MobileNav />
+      <KeyboardControls />
 
       <CaptureDialog open={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
       <TaskFormDialog open={newTaskOpen} onClose={() => setNewTaskOpen(false)} onCreated={(title) => notify("success", `Added “${title}”`)} />

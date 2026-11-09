@@ -10,6 +10,7 @@ import { Button, buttonClasses } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { addDays, formatLongDate, formatShortDate } from "@/lib/dates";
 import { journalDirty, MAX_JOURNAL_LENGTH, validJournalDate } from "@/lib/journal";
+import { JournalAdditions,additionTime } from "./journal-additions";
 import { TaskDataError } from "@/lib/data/tasks";
 import { useAppActions, useAppState } from "@/lib/store/app-store";
 
@@ -30,13 +31,13 @@ export function JournalView(){
       <Button onClick={()=>choose(today)} disabled={date===today}>Today</Button>
     </div>
     <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_15rem]">
-      <JournalEditor key={date} date={date} />
+      <div className="min-w-0 space-y-4"><JournalAdditions key={date} date={date} /><details><summary className="cursor-pointer py-2 text-sm text-muted">Earlier daily-page editor / any unsaved draft</summary><JournalEditor key={date} date={date} /></details></div>
       <Card>
         <CardHeader title="Your pages" description="Dates with a saved entry." icon={<BookOpen className="h-4 w-4" aria-hidden="true" />} />
         {journalIndexStatus==="loading"&&<p role="status" className="text-sm text-muted">Loading saved dates…</p>}
         {journalIndexStatus==="error"&&<div role="alert" className="space-y-2"><p className="text-sm text-danger">{journalIndexError}</p><Button onClick={()=>void loadJournalIndex()}>Retry journal setup</Button></div>}
         {journalIndexStatus==="ready"&&(journalDates.length?<ul className="max-h-80 space-y-1 overflow-y-auto">{journalDates.map(entry=><li key={entry.id}><Link href={`/journal?date=${entry.date}`} scroll={false} aria-current={date===entry.date?"date":undefined} className={`block rounded-lg px-3 py-2 text-sm ${date===entry.date?"bg-accent-soft text-accent-strong":"text-muted hover:bg-hover"}`}>{formatShortDate(entry.date)} · {entry.date.slice(0,4)}</Link></li>)}</ul>:<p className="text-sm text-muted">Your first saved entry will appear here.</p>)}
-        <p className="mt-4 text-xs text-subtle">Entry dates follow the calendar day you choose. Notes stay private to your account.</p>
+        <p className="mt-4 text-xs text-subtle">Entry dates follow the calendar day you choose. Protected by your account, not end-to-end encrypted. Journal text is not sent to an AI model.</p>
       </Card>
     </div>
   </div>;
@@ -56,14 +57,16 @@ function JournalEditor({date}:{date:string}){
     finally{saving.current=false;}
   }
   const sources=journalSources.filter(source=>source.date===date);
+  const converted=Boolean(entry?.usesAdditions);
   return <Card className="min-w-0">
     <CardHeader title={formatLongDate(date)} description={entry?`Saved · revision ${entry.revision}`:"A little space to reflect."} />
     <Button size="sm" variant="ghost" className="mb-3" disabled={busy||status==="loading"} onClick={()=>void loadJournalDate(date)}>Refresh saved entry · keep my draft</Button>
     {status==="loading"&&<p role="status" className="mb-4 text-sm text-muted">Loading this entry…</p>}
     {status==="error"&&<div role="alert" className="mb-4 space-y-2"><p className="text-sm text-danger">{journalDayErrors[date]}</p><Button disabled={busy} onClick={()=>void loadJournalDate(date)}>Retry saved entry</Button></div>}
     {draft&&<form onSubmit={submit} className="space-y-4" aria-busy={busy}>
+      {converted&&<p className="text-sm text-warning">This day uses timestamped additions above. Any unsaved earlier draft stays here so you can copy it into a new addition; whole-page saving is disabled.</p>}
       <fieldset disabled={busy||status!=="ready"}>
-        <Field label="Your entry" htmlFor="journal-body" hint="No prompts or perfect words required."><Textarea id="journal-body" className="min-h-72 resize-y text-base leading-relaxed" rows={12} maxLength={MAX_JOURNAL_LENGTH} value={draft.body} onChange={event=>{setJournalDraft(date,event.target.value);setError(null);setMessage("");}} placeholder="What’s on your mind today?" /></Field>
+        <Field label="Your entry" htmlFor="journal-body" hint="No prompts or perfect words required."><Textarea id="journal-body" readOnly={converted} className="journal-writing min-h-48 resize-y text-base leading-relaxed sm:min-h-72" rows={10} autoCapitalize="sentences" spellCheck enterKeyHint="enter" maxLength={MAX_JOURNAL_LENGTH} value={draft.body} onChange={event=>{setJournalDraft(date,event.target.value);setError(null);setMessage("");}} placeholder="What’s on your mind today?" /></Field>
       </fieldset>
       {changed&&<div role="alert" className="space-y-3 rounded-xl border border-warning/40 bg-warning/5 p-3">
         <p className="text-sm text-warning">The saved entry has changed. Your draft is kept below; review both before saving.</p>
@@ -76,13 +79,13 @@ function JournalEditor({date}:{date:string}){
       <p role="status" className="text-sm text-success">{message}</p>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs text-subtle">{busy?"Saving…":dirty?"Unsaved draft · kept while moving around this app":"No unsaved changes"}</p>
-        <div className="flex flex-wrap gap-2"><Button variant="ghost" disabled={busy||!dirty} onClick={()=>{resetJournalDraft(date);setError(null);setMessage("");}}>Discard my draft</Button><Button type="submit" variant="primary" disabled={busy||status!=="ready"||!dirty||!draft.body.trim()||changed}><Save className="h-4 w-4" aria-hidden="true" />{busy?"Saving…":"Save entry"}</Button></div>
+        <div className="flex flex-wrap gap-2"><Button variant="ghost" disabled={busy||!dirty} onClick={()=>{resetJournalDraft(date);setError(null);setMessage("");}}>Discard my draft</Button><Button type="submit" variant="primary" disabled={busy||status!=="ready"||!dirty||!draft.body.trim()||changed||converted}><Save className="h-4 w-4" aria-hidden="true" />{busy?"Saving…":"Save entry"}</Button></div>
       </div>
       <p className="text-xs text-subtle">Save before closing or refreshing. Unsaved drafts are held in memory, not browser storage; iPhone may not show a leave-page warning.</p>
     </form>}
     {sources.length>0&&<div className="mt-6 space-y-2 border-t border-line pt-4"><h3 className="text-sm font-medium">Added from Inbox</h3><ul className="space-y-2 text-sm text-muted">{sources.map(source=>{
       const original=inboxNotes.find(note=>note.id===source.noteId);
-      return <li key={source.id}>{original?<Link className="block truncate text-accent-strong hover:underline" href="/inbox">{original.body.trim().split("\n")[0].slice(0,100)||"View original capture"}</Link>:inboxStatus==="loading"?"Loading original capture…":inboxStatus==="error"?"Original captures couldn’t load. Your saved journal writing is kept.":"Original capture is not currently available."}{entry?.id!==source.entryId&&<p className="text-xs text-warning">This link refers to an earlier entry that is no longer available.</p>}</li>;
+      return <li key={source.id}>{original?<Link className="block truncate text-accent-strong hover:underline" href="/inbox">{original.body.trim().split("\n")[0].slice(0,100)||"View original capture"}</Link>:inboxStatus==="loading"?"Loading original capture…":inboxStatus==="error"?"Original captures couldn’t load. Your saved journal writing is kept.":"Original capture is not currently available."}<p className="text-xs text-subtle">Added <time dateTime={source.addedAt}>{additionTime(source.addedAt)}</time></p>{entry?.id!==source.entryId&&<p className="text-xs text-warning">This link refers to an earlier entry that is no longer available.</p>}</li>;
     })}</ul><p className="text-xs text-subtle">Journal writing and original captures are independent copies.</p></div>}
     <Link href="/inbox" className={buttonClasses("ghost","sm","mt-5 min-h-11")}>Open Inbox to add a note</Link>
   </Card>;
