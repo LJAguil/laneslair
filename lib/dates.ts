@@ -101,3 +101,25 @@ export function dueDateToTimestamp(value: ISODate): string {
   d.setHours(12, 0, 0, 0);
   return d.toISOString();
 }
+
+/** Timed deadlines use the device zone at save time and remain the same instant when travelling.
+ * Reject nonexistent spring-forward times rather than silently changing the owner's choice.
+ * Repeated fall-back times use the browser's earlier occurrence.
+ */
+export function taskDueTimestamp(date?: ISODate, time?: string): string | null {
+  if (!date) {
+    if (time) throw new Error("Choose a due date before adding a time.");
+    return null;
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || toISODate(parseISODate(date)) !== date) throw new Error("Choose a valid due date.");
+  if (!time) return dueDateToTimestamp(date);
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) throw new Error("Choose a valid due time.");
+  const value = new Date(`${date}T${time}:00`);
+  if (timestampToLocalDateTime(value.toISOString()).slice(0, 16) !== `${date}T${time}`) throw new Error("That time doesn't exist on this date in your device's time zone. Choose another time.");
+  return value.toISOString();
+}
+
+export function formatTaskDue(task: { dueDate?: ISODate; dueTime?: string }, today: ISODate): string {
+  if (!task.dueDate) return "No due date";
+  return `${formatDueLabel(task.dueDate, today)}${task.dueTime ? ` · ${formatTime(`${task.dueDate}T${task.dueTime}`)}` : ""}`;
+}

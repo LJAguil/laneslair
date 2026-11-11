@@ -18,8 +18,10 @@ export const isDone = (task: Task) => task.status === "done";
 /** Still needs doing: not done and not cancelled. */
 export const isOpen = (task: Task) => task.status === "todo" || task.status === "in_progress";
 
-export function isOverdue(task: Task, today: ISODate): boolean {
-  return isOpen(task) && !!task.dueDate && daysBetween(today, task.dueDate) < 0;
+export function isOverdue(task: Task, today: ISODate, now = Date.now()): boolean {
+  if (!isOpen(task)) return false;
+  if (task.dueAt) return new Date(task.dueAt).getTime() <= now;
+  return !!task.dueDate && daysBetween(today, task.dueDate) < 0;
 }
 
 /** Open tasks first, then by priority, then by due date (no due date last). */
@@ -28,7 +30,7 @@ export function sortTasks(tasks: Task[]): Task[] {
     if (isOpen(a) !== isOpen(b)) return isOpen(a) ? -1 : 1;
     const p = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
     if (p !== 0) return p;
-    return (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999");
+    return `${a.dueDate ?? "9999"}T${a.dueTime ?? "23:59"}`.localeCompare(`${b.dueDate ?? "9999"}T${b.dueTime ?? "23:59"}`);
   });
 }
 
@@ -41,23 +43,23 @@ export interface TaskFilters {
   query: string;
 }
 
-export function filterTasks(tasks: Task[], filters: TaskFilters, today: ISODate): Task[] {
+export function filterTasks(tasks: Task[], filters: TaskFilters, today: ISODate, now = Date.now()): Task[] {
   const q = filters.query.trim().toLowerCase();
   return tasks.filter((t) => {
     if (filters.priority !== "all" && t.priority !== filters.priority) return false;
-    if (filters.status === "overdue" && !isOverdue(t, today)) return false;
+    if (filters.status === "overdue" && !isOverdue(t, today, now)) return false;
     if (filters.status !== "all" && filters.status !== "overdue" && t.status !== filters.status) return false;
     if (q && !t.title.toLowerCase().includes(q)) return false;
     return true;
   });
 }
 
-export function taskStats(tasks: Task[], today: ISODate) {
+export function taskStats(tasks: Task[], today: ISODate, now = Date.now()) {
   const open = tasks.filter(isOpen);
   return {
     outstanding: open.length,
     dueToday: open.filter((t) => t.dueDate === today).length,
-    overdue: open.filter((t) => isOverdue(t, today)).length,
+    overdue: open.filter((t) => isOverdue(t, today, now)).length,
     completedToday: tasks.filter((t) => isDone(t) && t.completedAt?.startsWith(today)).length,
   };
 }

@@ -9,7 +9,7 @@
 // The payload builders (buildTaskInsert / buildTaskUpdate) are pure functions
 // so the exact values sent to the database can be unit tested.
 import type { PostgrestError } from "@supabase/supabase-js";
-import { dueDateToTimestamp, timestampToLocalDate, timestampToLocalDateTime } from "@/lib/dates";
+import { taskDueTimestamp, timestampToLocalDate, timestampToLocalDateTime } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/client";
 import type { ISODate, NewTaskInput, Priority, Task, TaskStatus } from "@/lib/types";
 
@@ -23,12 +23,14 @@ export interface TaskRow {
   status: TaskStatus;
   priority: Priority;
   due_at: string | null;
+  due_has_time?: boolean;
   completed_at: string | null;
   created_at: string;
 }
 
 /** Columns the app writes on insert. */
 export interface TaskInsert {
+  due_has_time?: boolean;
   user_id: string;
   title: string;
   /** `text not null default ''` — must never be null. */
@@ -40,7 +42,7 @@ export interface TaskInsert {
 }
 
 /** Columns the app writes on update. Omitted keys are left unchanged in the database. */
-export type TaskUpdate = Partial<Pick<TaskInsert, "title" | "description" | "priority" | "status" | "due_at" | "project_id">> & {
+export type TaskUpdate = Partial<Pick<TaskInsert, "title" | "description" | "priority" | "status" | "due_at" | "due_has_time" | "project_id">> & {
   completed_at?: string | null;
   updated_at: string;
 };
@@ -52,11 +54,30 @@ export interface TaskChanges {
   priority: Priority;
   /** Calendar day, or undefined to clear the due date. */
   dueDate?: ISODate;
+  dueTime?: string;
   status: TaskStatus;
   projectId?: string;
 }
 
 const COLUMNS = "id, user_id, project_id, title, description, status, priority, due_at, completed_at, created_at";
+
+export const TIMED_TASK_SETUP = "Optional due-time setup is needed. Your input is kept. See docs/TASK_DEADLINES.md; don't rerun older migrations.";
+function missingDueTimeColumn(error: Partial<PostgrestError> | null) {
+  return !!error && ["42703", "PGRST204"].includes(error.code ?? "") && /due_has_time/.test(error.message ?? "");
+}
+/** Only retry requests rejected for the new column, never network/ambiguous writes. */
+async function withTaskColumns(query: (columns: string) => PromiseLike<{ data: unknown; error: PostgrestError | null }>, requiresTime = false) {
+  let result = await query(`${COLUMNS}, due_has_time`);
+  if (missingDueTimeColumn(result.error)) {
+    if (requiresTime) throw new TaskDataError(TIMED_TASK_SETUP);
+    result = await query(COLUMNS);
+  }
+  return result;
+}
+function dueTimestamp(date?: ISODate, time?: string) {
+  try { return taskDueTimestamp(date, time); }
+  catch (error) { throw new TaskDataError(error instanceof Error ? error.message : "Check the due date and time."); }
+}
 
 const STATUSES: readonly TaskStatus[] = ["todo", "in_progress", "done", "cancelled"];
 const PRIORITIES: readonly Priority[] = ["low", "medium", "high", "urgent"];
@@ -115,6 +136,7 @@ export function rowToTask(row: TaskRow): Task {
     status: STATUSES.includes(row.status) ? row.status : "todo",
     priority: PRIORITIES.includes(row.priority) ? row.priority : "medium",
     dueDate: row.due_at ? timestampToLocalDate(row.due_at) : undefined,
+    ...(row.due_has_time && row.due_at ? { dueTime: timestampToLocalDateTime(row.due_at).slice(11, 16), dueAt: row.due_at } : {}),
     projectId: row.project_id ?? undefined,
     createdAt: timestampToLocalDateTime(row.created_at),
     completedAt: row.completed_at ? timestampToLocalDateTime(row.completed_at) : undefined,
@@ -137,7 +159,8 @@ export function buildTaskInsert(userId: string, input: NewTaskInput): TaskInsert
     description: normalizeNotes(input.notes),
     priority: input.priority,
     status: "todo",
-    due_at: input.dueDate ? dueDateToTimestamp(input.dueDate) : null,
+    due_at: dueTimestamp(input.dueDate, input.dueTime),
+    ...(input.dueTime ? { due_has_time: true } : {}),
     project_id: taskProjectId(input.projectId),
   };
 }
@@ -146,8 +169,8 @@ export function buildTaskInsert(userId: string, input: NewTaskInput): TaskInsert
  * Builds the update for an edit, sending only what changed.
  * - completed_at is set when a task becomes done, cleared when it stops being
  *   done, and left alone if it was already done (keeps the original time).
- * - due_at is only sent when the calendar day changed, so a time set elsewhere
- *   (e.g. in the Supabase dashboard) isn't overwritten by an unrelated edit.
+ * - due_at is sent only when the chosen date/time changes. Unrelated edits keep
+ *   the exact saved instant (including an ambiguous fall-back time).
  * - updated_at is always set.
  */
 export function buildTaskUpdate(previous: Task, changes: TaskChanges, now: Date = new Date()): TaskUpdate {
@@ -162,8 +185,10 @@ export function buildTaskUpdate(previous: Task, changes: TaskChanges, now: Date 
 
   if (changes.priority !== previous.priority) update.priority = changes.priority;
 
-  if ((changes.dueDate ?? null) !== (previous.dueDate ?? null)) {
-    update.due_at = changes.dueDate ? dueDateToTimestamp(changes.dueDate) : null;
+  const time = Object.prototype.hasOwnProperty.call(changes, "dueTime") ? changes.dueTime : previous.dueTime;
+  if ((changes.dueDate ?? null) !== (previous.dueDate ?? null) || time !== previous.dueTime) {
+    update.due_at = dueTimestamp(changes.dueDate, changes.dueDate ? time : undefined);
+    if (time || previous.dueTime) update.due_has_time = !!(changes.dueDate && time);
   }
 
   // Omitting projectId preserves the link; explicit undefined clears it.
@@ -196,33 +221,35 @@ export async function getVerifiedUserId(): Promise<string> {
 }
 
 export async function fetchTasks(): Promise<Task[]> {
-  const { data, error } = await createClient()
+  const { data, error } = await withTaskColumns((columns) => createClient()
     .from("tasks")
-    .select(COLUMNS)
-    .order("created_at", { ascending: false });
+    .select(columns)
+    .order("created_at", { ascending: false }));
   if (error) fail("load your tasks", error);
   return (data as TaskRow[]).map(rowToTask);
 }
 
 export async function createTask(userId: string, input: NewTaskInput): Promise<Task> {
-  const { data, error } = await createClient()
+  const fields = buildTaskInsert(userId, input);
+  const { data, error } = await withTaskColumns((columns) => createClient()
     .from("tasks")
-    .insert(buildTaskInsert(userId, input))
-    .select(COLUMNS)
-    .single();
+    .insert(fields)
+    .select(columns)
+    .single(), !!input.dueTime);
   if (error) fail("save the task", error);
   return rowToTask(data as TaskRow);
 }
 
 /** Saves an edit to an existing task (matched by UUID and owner). Never inserts. */
 export async function updateTask(userId: string, previous: Task, changes: TaskChanges): Promise<Task> {
-  const { data, error } = await createClient()
+  const fields = buildTaskUpdate(previous, changes);
+  const { data, error } = await withTaskColumns((columns) => createClient()
     .from("tasks")
-    .update(buildTaskUpdate(previous, changes))
+    .update(fields)
     .eq("id", previous.id)
     .eq("user_id", userId)
-    .select(COLUMNS)
-    .single();
+    .select(columns)
+    .single(), fields.due_has_time !== undefined || !!previous.dueTime);
   // `.single()` errors (PGRST116) when no row matched, e.g. it was deleted elsewhere.
   if (error) fail("save your changes", error);
   return rowToTask(data as TaskRow);
@@ -231,13 +258,13 @@ export async function updateTask(userId: string, previous: Task, changes: TaskCh
 /** Sets a task's status, keeping completed_at in sync (set when done, cleared otherwise). */
 export async function updateTaskStatus(userId: string, id: string, status: TaskStatus): Promise<Task> {
   const now = new Date().toISOString();
-  const { data, error } = await createClient()
+  const { data, error } = await withTaskColumns((columns) => createClient()
     .from("tasks")
     .update({ status, completed_at: status === "done" ? now : null, updated_at: now })
     .eq("id", id)
     .eq("user_id", userId)
-    .select(COLUMNS)
-    .single();
+    .select(columns)
+    .single());
   if (error) fail("update the task", error);
   return rowToTask(data as TaskRow);
 }

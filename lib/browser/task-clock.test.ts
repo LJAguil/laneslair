@@ -1,0 +1,20 @@
+import { afterEach, expect, it, vi } from "vitest";
+import { subscribeTaskClock, taskClockSnapshot } from "./task-clock";
+afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+it("updates exactly at minute boundaries, catches up on foreground, and cleans up", () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-11-11T18:29:59.900Z"));
+  const browser = new EventTarget(), page = new EventTarget();
+  vi.stubGlobal("window", browser); vi.stubGlobal("document", page);
+  const changes: number[] = [];
+  const dispose = subscribeTaskClock(() => changes.push(taskClockSnapshot()));
+  vi.advanceTimersByTime(99); expect(changes).toEqual([]);
+  vi.advanceTimersByTime(1); expect(changes).toEqual([Date.parse("2026-11-11T18:30:00Z")]);
+  vi.setSystemTime(new Date("2026-11-11T19:00:20Z"));
+  browser.dispatchEvent(new Event("focus"));
+  page.dispatchEvent(new Event("visibilitychange"));
+  expect(changes.slice(-2)).toEqual([Date.parse("2026-11-11T19:00:00Z"), Date.parse("2026-11-11T19:00:00Z")]);
+  dispose(); const count = changes.length;
+  vi.advanceTimersByTime(120000); browser.dispatchEvent(new Event("focus"));
+  expect(changes).toHaveLength(count);
+});

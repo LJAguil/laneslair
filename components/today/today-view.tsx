@@ -12,7 +12,7 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Select } from "@/components/ui/field";
 import { TaskDataError } from "@/lib/data/tasks";
 import { formatLongDate } from "@/lib/dates";
-import { isCheckedIn, isOpen, sortTasks } from "@/lib/selectors";
+import { isCheckedIn, isOpen, isOverdue, sortTasks } from "@/lib/selectors";
 import { useAppActions, useAppState } from "@/lib/store/app-store";
 import { relevantTasks } from "@/lib/today";
 import { UpcomingReminders } from "./upcoming-reminders";
@@ -20,12 +20,12 @@ import { PuzzleCard } from "@/components/play/puzzle-card";
 import { captureIsUnsorted } from "@/lib/journal";
 
 export function TodayView() {
-  const { today, tasks, tasksStatus, habits, habitsStatus, inboxNotes, inboxStatus, focus,journalSources,journalIndexStatus } = useAppState();
+  const { today, now, tasks, tasksStatus, habits, habitsStatus, inboxNotes, inboxStatus, focus,journalSources,journalIndexStatus } = useAppState();
   const { openNewTask } = useShell();
   const focusId = focus?.date === today ? focus.taskId : undefined;
-  const upcoming = relevantTasks(tasks, today, focusId ?? undefined);
+  const upcoming = relevantTasks(tasks, today, focusId ?? undefined, now);
   const dueToday=tasks.filter(task=>isOpen(task)&&task.dueDate===today).length;
-  const overdue=tasks.filter(task=>isOpen(task)&&task.dueDate&&task.dueDate<today).length;
+  const overdue=tasks.filter(task=>isOverdue(task,today,now)).length;
   const activeHabits=habits.filter(habit=>habit.isActive);
   const completedHabits=activeHabits.filter(habit=>isCheckedIn(habit,today)).length;
   const captures=inboxNotes.filter(note=>captureIsUnsorted(note,journalSources)).length;

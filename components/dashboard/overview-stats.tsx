@@ -14,8 +14,8 @@ interface Stat {
 
 /** Daily overview tiles: outstanding, due today, overdue, completed today. */
 export function OverviewStats() {
-  const { tasks, tasksStatus, today } = useAppState();
-  const s = taskStats(tasks, today);
+  const { tasks, tasksStatus, today, now } = useAppState();
+  const s = taskStats(tasks, today, now);
   // Show a dash, not a misleading 0, while tasks are loading or failed to load.
   const v = (n: number) => (tasksStatus === "ready" ? n : null);
 

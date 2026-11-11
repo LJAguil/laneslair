@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import { rowToTask, buildTaskInsert, TaskDataError, describeTaskError, type TaskRow } from "./tasks";
+import { rowToTask, buildTaskInsert, TaskDataError, describeTaskError, TIMED_TASK_SETUP, type TaskRow } from "./tasks";
 import type { DailyFocus, InboxNote, NewTaskInput, Task } from "@/lib/types";
 
 export interface NoteRow {
@@ -81,10 +81,11 @@ export async function updateNote(userId: string, id: string, changes: { body?: s
 export async function convertNote(userId: string, noteId: string, input: NewTaskInput): Promise<{ note: InboxNote; task: Task | null }> {
   const fields = buildTaskInsert(userId, input);
   if (!fields.title) throw new TaskDataError("Give the task a title.");
-  const { data, error } = await createClient().rpc("convert_inbox_note", {
+  const { data, error } = await createClient().rpc(input.dueTime ? "convert_inbox_note_timed" : "convert_inbox_note", {
     p_note_id: noteId, p_title: fields.title, p_description: fields.description,
     p_priority: fields.priority, p_due_at: fields.due_at, p_project_id: fields.project_id,
   });
+  if (input.dueTime && error && ["42883", "PGRST202", "42703", "PGRST204"].includes(error.code)) throw new TaskDataError(TIMED_TASK_SETUP);
   if (error) fail("make this a task", error);
   const result = data as { note: NoteRow; task: TaskRow | null };
   return { note: noteFromRow(result.note), task: result.task ? rowToTask(result.task) : null };

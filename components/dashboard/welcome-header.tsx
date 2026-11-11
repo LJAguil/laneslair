@@ -9,9 +9,9 @@ import { useAppState } from "@/lib/store/app-store";
 import { pluralize } from "@/lib/utils";
 
 export function WelcomeHeader() {
-  const { profile, tasks, tasksStatus, today } = useAppState();
+  const { profile, tasks, tasksStatus, today, now } = useAppState();
   const { openNewTask } = useShell();
-  const stats = taskStats(tasks, today);
+  const stats = taskStats(tasks, today, now);
 
   return (
     <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

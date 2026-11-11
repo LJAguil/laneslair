@@ -12,12 +12,12 @@ import { useAppState } from "@/lib/store/app-store";
 import { TaskList } from "./task-list";
 
 export function TasksView() {
-  const { tasks, tasksStatus, today } = useAppState();
+  const { tasks, tasksStatus, today, now } = useAppState();
   const { openNewTask } = useShell();
   const [filters, setFilters] = useState<TaskFilters>({ status: "all", priority: "all", query: "" });
 
-  const visible = sortTasks(filterTasks(tasks, filters, today));
-  const count = (status: StatusFilter) => filterTasks(tasks, { ...filters, status }, today).length;
+  const visible = sortTasks(filterTasks(tasks, filters, today, now));
+  const count = (status: StatusFilter) => filterTasks(tasks, { ...filters, status }, today, now).length;
 
   const statusOptions: { value: StatusFilter; label: string; count: number }[] = [
     { value: "all", label: "All", count: count("all") },
@@ -40,7 +40,7 @@ export function TasksView() {
   ] as const;
 
   const hasFilters = filters.status !== "all" || filters.priority !== "all" || filters.query !== "";
-  const overdueCount = tasks.filter((t) => isOverdue(t, today)).length;
+  const overdueCount = tasks.filter((t) => isOverdue(t, today, now)).length;
   const openCount = tasks.filter(isOpen).length;
 
   return (

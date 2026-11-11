@@ -7,7 +7,7 @@ import { Badge, PriorityBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "@/components/ui/checkbox";
 import { Dialog } from "@/components/ui/dialog";
-import { formatDueLabel } from "@/lib/dates";
+import { formatTaskDue } from "@/lib/dates";
 import { isDone, isOpen, isOverdue } from "@/lib/selectors";
 import { useAppActions, useAppState } from "@/lib/store/app-store";
 import type { ISODate, Project, Task } from "@/lib/types";
@@ -30,7 +30,7 @@ interface TaskListProps {
  * so a failed request is never mistaken for "no tasks".
  */
 export function TaskList({ tasks, compact, allowDelete, emptyTitle = "Nothing here", emptyDescription }: TaskListProps) {
-  const { projects, tasksStatus, tasksError, pendingTaskIds, today } = useAppState();
+  const { projects, tasksStatus, tasksError, pendingTaskIds, today, now } = useAppState();
   const { toggleTask, deleteTask, loadTasks } = useAppActions();
   const [confirming, setConfirming] = useState<Task | null>(null);
   const [editing, setEditing] = useState<Task | null>(null);
@@ -52,6 +52,7 @@ export function TaskList({ tasks, compact, allowDelete, emptyTitle = "Nothing he
             key={task.id}
             task={task}
             today={today}
+            now={now}
             project={task.projectId ? projectById.get(task.projectId) : undefined}
             compact={compact}
             pending={pendingTaskIds.includes(task.id)}
@@ -98,6 +99,7 @@ export function TaskList({ tasks, compact, allowDelete, emptyTitle = "Nothing he
 interface TaskRowProps {
   task: Task;
   today: ISODate;
+  now?: number;
   project?: Project;
   compact?: boolean;
   pending?: boolean;
@@ -106,10 +108,10 @@ interface TaskRowProps {
   onDelete?: () => void;
 }
 
-export function TaskRow({ task, today, project, compact, pending, onToggle, onEdit, onDelete }: TaskRowProps) {
+export function TaskRow({ task, today, now, project, compact, pending, onToggle, onEdit, onDelete }: TaskRowProps) {
   const done = isDone(task);
   const cancelled = task.status === "cancelled";
-  const overdue = isOverdue(task, today);
+  const overdue = isOverdue(task, today, now);
 
   return (
     <li className="group grid grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-x-3 gap-y-2 py-3 first:pt-0 last:pb-0 sm:flex sm:gap-3" aria-busy={pending || undefined}>
@@ -125,10 +127,10 @@ export function TaskRow({ task, today, project, compact, pending, onToggle, onEd
         {!compact && task.notes && <p className="mt-0.5 text-sm text-subtle">{task.notes}</p>}
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-subtle">
           {task.dueDate && (
-            <span className={cn("inline-flex items-center gap-1", overdue && "text-danger", isOpen(task) && task.dueDate === today && "text-warning")}>
+            <span className={cn("inline-flex items-center gap-1", overdue ? "text-danger" : isOpen(task) && task.dueDate === today && "text-warning")}>
               <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />
               <span className="sr-only">Due </span>
-              {formatDueLabel(task.dueDate, today)}
+              {formatTaskDue(task, today)}{overdue && task.dueAt ? " · Overdue" : ""}
             </span>
           )}
           {project && (

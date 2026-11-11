@@ -23,6 +23,10 @@ export interface Task {
   status: TaskStatus;
   /** Local calendar day the task is due. */
   dueDate?: ISODate;
+  /** Optional local clock time; backed by dueAt, an absolute deadline. */
+  dueTime?: string;
+  /** UTC instant, present only when a due time was explicitly chosen. */
+  dueAt?: ISODateTime;
   projectId?: string;
   /** Local date-time strings ("YYYY-MM-DDTHH:mm:ss"). */
   createdAt: ISODateTime;
@@ -131,7 +135,7 @@ export interface UserProfile {
 
 /** Input used when creating a task from a form. */
 export type NewTaskInput = Pick<Task, "title" | "priority"> &
-  Partial<Pick<Task, "dueDate" | "projectId" | "notes">>;
+  Partial<Pick<Task, "dueDate" | "dueTime" | "projectId" | "notes">>;
 
 /** Captures retain their original text independently of any resulting task. */
 export interface InboxNote {

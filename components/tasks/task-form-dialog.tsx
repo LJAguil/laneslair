@@ -80,6 +80,7 @@ function TaskForm({ task, capture, onCancel, onDone, onSavingChange }: TaskFormP
   const [title, setTitle] = useState(task?.title ?? captureDefaults?.title ?? "");
   const [priority, setPriority] = useState<Priority>(task?.priority ?? "medium");
   const [dueDate, setDueDate] = useState<string>(task ? (task.dueDate ?? "") : capture ? "" : today);
+  const [dueTime, setDueTime] = useState(task?.dueTime ?? "");
   const [projectId, setProjectId] = useState(task?.projectId ?? "");
   const [notes, setNotes] = useState(task?.notes ?? captureDefaults?.notes ?? "");
   const [status, setStatus] = useState<TaskStatus>(task?.status ?? "todo");
@@ -106,7 +107,7 @@ function TaskForm({ task, capture, onCancel, onDone, onSavingChange }: TaskFormP
     try {
       reminder.validate();
       // Notes are optional: an empty or whitespace-only value is saved as "".
-      const fields = { title: trimmed, priority, dueDate: dueDate || undefined, notes, projectId: projectId || undefined };
+      const fields = { title: trimmed, priority, dueDate: dueDate || undefined, dueTime: dueDate && dueTime ? dueTime : undefined, notes, projectId: projectId || undefined };
       const previous = task ?? (createdTask.current ? tasks.find(t=>t.id===createdTask.current!.id)??createdTask.current : null);
       let saved = previous;
       if (previous) {
@@ -206,14 +207,21 @@ function TaskForm({ task, capture, onCancel, onDone, onSavingChange }: TaskFormP
 
       <Field label="Due date" htmlFor={`${id}-due`}>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Input id={`${id}-due`} type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="sm:w-44" />
+          <Input id={`${id}-due`} type="date" value={dueDate} onChange={(e) => { setDueDate(e.target.value); if (!e.target.value) setDueTime(""); }} className="sm:w-44" />
           <div className="flex flex-wrap gap-1.5">
             {quickDates.map((d) => (
-              <Button key={d.label} size="sm" variant={dueDate === d.value ? "primary" : "secondary"} onClick={() => setDueDate(d.value)} className="h-10">
+              <Button key={d.label} size="sm" variant={dueDate === d.value ? "primary" : "secondary"} onClick={() => { setDueDate(d.value); if (!d.value) setDueTime(""); }} className="h-10">
                 {d.label}
               </Button>
             ))}
           </div>
+        </div>
+      </Field>
+
+      <Field label="Due time (optional)" htmlFor={`${id}-due-time`} hint="No time: due through the end of that day. With a time: overdue at that deadline. Uses this device’s time zone; push reminders are set separately.">
+        <div className="flex items-center gap-2">
+          <Input id={`${id}-due-time`} type="time" step="60" value={dueDate ? dueTime : ""} disabled={!dueDate} onChange={(event) => setDueTime(event.target.value)} />
+          {dueTime && <Button onClick={() => setDueTime("")}>Clear time</Button>}
         </div>
       </Field>
 

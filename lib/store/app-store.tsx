@@ -5,8 +5,9 @@
 // database directly.
 //
 // Tasks, projects, habits, Inbox, daily focus, and Journal (after migration 004) persist in Supabase. Everything else
-// (goals, events, schedule, notifications, chats) is still
+// (goals, events, schedule, chats) is still
 // local sample data that resets on a full page reload.
+// The bell derives real task attention items; legacy notification state is empty.
 
 import { createContext, useContext, useEffect, useMemo, useReducer, useSyncExternalStore, type ReactNode } from "react";
 import { createHabitActions, initialHabitState, reduceHabits, type HabitAction, type HabitSlice } from "./habit-state";
@@ -14,10 +15,11 @@ import { mergeTaskRead, type TaskWrite } from "./task-read";
 import { createInboxActions, initialInboxState, reduceInbox, type InboxAction, type InboxSlice } from "./inbox-state";
 import { createJournalActions, initialJournalState, reduceJournal, type JournalAction, type JournalSlice } from "./journal-state";
 import * as taskData from "@/lib/data/tasks";
-import { localToday, timestampToLocalDateTime } from "@/lib/dates";
+import { toISODate, timestampToLocalDateTime } from "@/lib/dates";
+import { subscribeTaskClock, taskClockSnapshot } from "@/lib/browser/task-clock";
 import { sampleEvents } from "@/lib/sample-data/events";
 import { sampleGoals } from "@/lib/sample-data/habits-goals";
-import { sampleConversations, sampleNotifications, sampleProfile, sampleSchedule } from "@/lib/sample-data/misc";
+import { sampleConversations, sampleProfile, sampleSchedule } from "@/lib/sample-data/misc";
 import * as projectData from "@/lib/data/projects";
 import type {
   AppNotification,
@@ -44,6 +46,8 @@ export interface Notice {
 export interface AppState extends InboxSlice, HabitSlice, JournalSlice {
   /** The user's local calendar day, read once in the browser. */
   today: ISODate;
+  /** Browser clock, refreshed at minute boundaries and on foregrounding. */
+  now: number;
   tasks: Task[];
   tasksStatus: LoadStatus;
   tasksError: string | null;
@@ -69,6 +73,7 @@ function createInitialState(today: ISODate): AppState {
     ...initialJournalState,
     ...initialHabitState,
     today,
+    now: 0,
     tasks: [],
     tasksStatus: "loading",
     tasksError: null,
@@ -81,7 +86,7 @@ function createInitialState(today: ISODate): AppState {
     goals: sampleGoals(today),
     events: sampleEvents(today),
     schedule: sampleSchedule(today),
-    notifications: sampleNotifications(today),
+    notifications: [],
     conversations: sampleConversations,
     profile: sampleProfile,
   };
@@ -370,12 +375,6 @@ const ActionsContext = createContext<AppActions | null>(null);
 // The local date is only known in the browser. On the server (and during the
 // first hydration pass) this returns null, so nothing date-dependent is
 // prerendered or cached, and the server and client HTML always match.
-function subscribeDay(onChange: () => void) {
-  const timer = window.setInterval(onChange, 60000);
-  window.addEventListener("focus",onChange);
-  document.addEventListener("visibilitychange",onChange);
-  return () => { clearInterval(timer); window.removeEventListener("focus",onChange); document.removeEventListener("visibilitychange",onChange); };
-}
 const getServerToday = () => null;
 
 /**
@@ -383,12 +382,12 @@ const getServerToday = () => null;
  * browser's local date is known (one quick pass after hydration).
  */
 export function AppStoreProvider({ children, fallback = null }: { children: ReactNode; fallback?: ReactNode }) {
-  const today = useSyncExternalStore(subscribeDay, localToday, getServerToday);
-  if (!today) return fallback;
-  return <StoreProvider today={today}>{children}</StoreProvider>;
+  const now = useSyncExternalStore(subscribeTaskClock, taskClockSnapshot, getServerToday);
+  if (now === null) return fallback;
+  return <StoreProvider today={toISODate(new Date(now))} now={now}>{children}</StoreProvider>;
 }
 
-function StoreProvider({ today, children }: { today: ISODate; children: ReactNode }) {
+function StoreProvider({ today, now, children }: { today: ISODate; now: number; children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, today, createInitialState);
   const actions = useMemo(() => createActions(dispatch), [dispatch]);
 
@@ -404,7 +403,7 @@ function StoreProvider({ today, children }: { today: ISODate; children: ReactNod
 
   return (
     <ActionsContext.Provider value={actions}>
-      <StateContext.Provider value={{ ...state, today }}>{children}</StateContext.Provider>
+      <StateContext.Provider value={{ ...state, today, now }}>{children}</StateContext.Provider>
     </ActionsContext.Provider>
   );
 }
