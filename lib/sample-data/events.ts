@@ -4,7 +4,7 @@ import type { ISODate, LocalEvent } from "@/lib/types";
 /** Sample local events over the next ~10 days from `T` (today). */
 export function sampleEvents(T: ISODate): LocalEvent[] {
   const at = (offset: number, time: string) => `${addDays(T, offset)}T${time}:00`;
-  return [
+  const events: LocalEvent[] = [
     {
       id: "e1",
       title: "Thursday Night Jazz at The Blue Room",
@@ -94,4 +94,7 @@ export function sampleEvents(T: ISODate): LocalEvent[] {
       saved: false,
     },
   ];
+  // Legacy Overview/search/mock-assistant consumers must not mistake these for
+  // the independently checked Discover catalog.
+  return events.map(event => ({ ...event, title: `Sample: ${event.title}` }));
 }

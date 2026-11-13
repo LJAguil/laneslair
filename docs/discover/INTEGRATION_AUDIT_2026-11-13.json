@@ -1,0 +1,156 @@
+{
+  "auditedAt": "2026-11-13T22:12:17.360Z",
+  "head": "8d4a84d",
+  "networkRequests": 0,
+  "expectedDigest": "94bd1b2083a41695fe9b33f7cd4779647d13c0979147fb4acf31bd1c02f06bfb",
+  "actualDigest": "94bd1b2083a41695fe9b33f7cd4779647d13c0979147fb4acf31bd1c02f06bfb",
+  "bundleBytes": 5614,
+  "preparedAt": "2026-11-13T19:30:14.752Z",
+  "representationCheckedAt": "2026-11-13T19:30:14.739Z",
+  "inputKind": "local-snapshot",
+  "curatedItems": 16,
+  "evaluations": [
+    {
+      "at": "2026-11-13T22:12:17.360Z",
+      "feed": {
+        "status": "loaded",
+        "checkedAt": "2026-11-13T19:30:14.739Z",
+        "itemCount": 10
+      },
+      "counts": {
+        "event": {
+          "main": 6,
+          "review-only": 1,
+          "archive": 2
+        },
+        "news": {
+          "main": 12,
+          "review-only": 3,
+          "archive": 0
+        },
+        "deal": {
+          "main": 0,
+          "review-only": 2,
+          "archive": 0
+        }
+      }
+    },
+    {
+      "at": "2026-11-14T19:30:14.739Z",
+      "feed": {
+        "status": "loaded",
+        "checkedAt": "2026-11-13T19:30:14.739Z",
+        "itemCount": 10
+      },
+      "counts": {
+        "event": {
+          "main": 1,
+          "review-only": 1,
+          "archive": 7
+        },
+        "news": {
+          "main": 2,
+          "review-only": 13,
+          "archive": 0
+        },
+        "deal": {
+          "main": 0,
+          "review-only": 2,
+          "archive": 0
+        }
+      }
+    },
+    {
+      "at": "2026-11-14T21:53:40.000Z",
+      "feed": {
+        "status": "loaded",
+        "checkedAt": "2026-11-13T19:30:14.739Z",
+        "itemCount": 10
+      },
+      "counts": {
+        "event": {
+          "main": 0,
+          "review-only": 2,
+          "archive": 7
+        },
+        "news": {
+          "main": 2,
+          "review-only": 13,
+          "archive": 0
+        },
+        "deal": {
+          "main": 0,
+          "review-only": 2,
+          "archive": 0
+        }
+      }
+    },
+    {
+      "at": "2026-11-14T22:07:54.000Z",
+      "feed": {
+        "status": "loaded",
+        "checkedAt": "2026-11-13T19:30:14.739Z",
+        "itemCount": 10
+      },
+      "counts": {
+        "event": {
+          "main": 0,
+          "review-only": 2,
+          "archive": 7
+        },
+        "news": {
+          "main": 0,
+          "review-only": 15,
+          "archive": 0
+        },
+        "deal": {
+          "main": 0,
+          "review-only": 2,
+          "archive": 0
+        }
+      }
+    },
+    {
+      "at": "2026-11-21T22:07:54.000Z",
+      "feed": {
+        "status": "loaded",
+        "checkedAt": "2026-11-13T19:30:14.739Z",
+        "itemCount": 10
+      },
+      "counts": {
+        "event": {
+          "main": 0,
+          "review-only": 1,
+          "archive": 8
+        },
+        "news": {
+          "main": 0,
+          "review-only": 5,
+          "archive": 10
+        },
+        "deal": {
+          "main": 0,
+          "review-only": 1,
+          "archive": 1
+        }
+      }
+    }
+  ],
+  "fallbacks": [
+    {
+      "name": "absent",
+      "status": "unavailable",
+      "exactCuratedFallback": true
+    },
+    {
+      "name": "altered",
+      "status": "unavailable",
+      "exactCuratedFallback": true
+    },
+    {
+      "name": "clockBeforePreparation",
+      "status": "unavailable",
+      "exactCuratedFallback": true
+    }
+  ]
+}

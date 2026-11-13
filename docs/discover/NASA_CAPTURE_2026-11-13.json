@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "nasa",
+  "endpoint": "https://www.nasa.gov/news-release/feed/",
+  "attemptId": "capture-2",
+  "bodyFetchedAt": "2026-11-13T19:30:14.739Z",
+  "representationCheckedAt": "2026-11-13T19:30:14.739Z",
+  "reviewedAt": "2026-11-13T19:34:57.992Z",
+  "inputCount": 10,
+  "candidateCount": 10,
+  "rejectedCount": 0,
+  "duplicateCount": 0,
+  "omittedCount": 0,
+  "curatedOverlapCount": 0,
+  "feedPlacements": {
+    "main": 10
+  },
+  "imageArticlePathCount": 5,
+  "etagPresent": true,
+  "lastModifiedPresent": true,
+  "bundleDigest": "94bd1b2083a41695fe9b33f7cd4779647d13c0979147fb4acf31bd1c02f06bfb",
+  "snapshotDigest": "75155e30fce7408baf2ac3707d278c1335727932d1b2b1e744d78793b6a9383d",
+  "applicationSelectionChanged": false,
+  "limitations": "Offline review of the persisted metadata; no article fetch, editorial verification, paywall check or feed repoll. Listing title does not guarantee release-only content."
+}

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Invented metadata only. Not NASA content or a production catalog. -->
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Invented offline importer sample</title>
+    <item>
+      <title>Invented rocket &amp; research</title>
+      <link>https://www.nasa.gov/invented-offline-example/</link>
+      <guid isPermaLink="false">invented-sample-one</guid>
+      <pubDate>Thu, 12 Nov 2026 05:05:00 +0000</pubDate>
+      <dc:creator>Invented Author</dc:creator>
+      <description><![CDATA[Invented body, discarded by importer.]]></description>
+      <content:encoded><![CDATA[Invented full article, discarded by importer.]]></content:encoded>
+    </item>
+    <item>
+      <title>Invented rocket &amp; research</title>
+      <link>https://www.nasa.gov/invented-offline-example/?utm_source=sample</link>
+      <guid isPermaLink="false">invented-sample-two</guid>
+      <pubDate>Thu, 12 Nov 2026 05:05:00 +0000</pubDate>
+      <dc:creator>Invented Author</dc:creator>
+    </item>
+    <item>
+      <title>Invented incomplete item</title>
+      <link>https://www.nasa.gov/invented-incomplete-example/</link>
+      <guid isPermaLink="false">invented-sample-three</guid>
+    </item>
+  </channel>
+</rss>

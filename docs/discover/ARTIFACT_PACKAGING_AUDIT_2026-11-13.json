@@ -1,0 +1,22 @@
+{
+  "auditedAt": "2026-11-13T22:24:42.745Z",
+  "head": "8d4a84d",
+  "networkRequests": 0,
+  "artifactFile": "lib/discover/feeds/releases/nasa-2026-11-13.ts",
+  "expectedDigest": "94bd1b2083a41695fe9b33f7cd4779647d13c0979147fb4acf31bd1c02f06bfb",
+  "actualDigest": "94bd1b2083a41695fe9b33f7cd4779647d13c0979147fb4acf31bd1c02f06bfb",
+  "byteLength": 5614,
+  "exactOriginalByteEquality": true,
+  "sourceCheckUnchanged": "2026-11-13T19:30:14.739Z",
+  "serverFixtureBuild": "passed",
+  "clientImportBuild": "rejected-server-only-as-expected",
+  "clientJavaScriptFilesChecked": 18,
+  "markersChecked": [
+    "94bd1b2083a41695fe9b33f7cd4779647d13c0979147fb4acf31bd1c02f06bfb",
+    "snapshotDigest",
+    "invalid-review-bundle"
+  ],
+  "clientMarkerMatches": 0,
+  "appFeedSelectionDisabled": true,
+  "discoverTestsPassed": 335
+}

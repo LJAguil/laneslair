@@ -1,0 +1,41 @@
+{
+  "checkedAt": "2026-11-13T22:36:59.297Z",
+  "baseCommit": "8d4a84dad370955cdaa31cafded7ab48fc20ada8",
+  "selectedCodeToolingAndTestFiles": 52,
+  "releaseFileHashMismatches": 0,
+  "discoverTests": 336,
+  "fullReleaseTests": 688,
+  "testSuites": 72,
+  "fullProductionBuild": "passed (Next 16.4.1 webpack, baseline config)",
+  "fullReleaseLint": "passed",
+  "projectTypeScript": "passed",
+  "clientChecks": {
+    "widths": [
+      320,
+      390
+    ],
+    "horizontalOverflow": false,
+    "pagination": [
+      4,
+      8,
+      12
+    ],
+    "warnings": 0,
+    "errors": 0,
+    "loadingFallback": "noninteractive; resolves to selected feed"
+  },
+  "sourceFeedCheckedAt": "2026-11-13T19:30:14.739Z",
+  "newNasaRequests": 0,
+  "actualEnvironmentFilesCopied": false,
+  "credentialsPassedToReleaseBuild": false,
+  "authenticationOrPersonalRecordsAccessed": false,
+  "gitIndexChanged": false,
+  "committed": false,
+  "deployed": false,
+  "remaining": [
+    "final scoped file/hunk review and commit authorization",
+    "authenticated/physical iPhone acceptance",
+    "manual refresh ownership and freshness at release time",
+    "separate push/deployment authorization"
+  ]
+}

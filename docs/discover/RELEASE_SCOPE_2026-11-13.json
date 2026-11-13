@@ -1,0 +1,274 @@
+{
+  "baseCommit": "8d4a84dad370955cdaa31cafded7ab48fc20ada8",
+  "preparedAt": "2026-11-13T22:28:48.406Z",
+  "selection": [
+    {
+      "file": "app/(app)/discover/page.tsx",
+      "sha256": "aa65c5956c86d95a999ada8c0b765a18d561e2e66c3e654eb2b175b4f5159be3"
+    },
+    {
+      "file": "components/discover/discover-view.tsx",
+      "sha256": "ac7586012ea1f9df5249c22a2cd8a853dbd748effd28b3ea7fc6618bc1f2599b"
+    },
+    {
+      "file": "lib/discover/candidate-news.ts",
+      "sha256": "dfdcd790224f92ef58d0b58d5028bf91f989804e5902c2d7c995645b1603694a"
+    },
+    {
+      "file": "lib/discover/candidate.test.ts",
+      "sha256": "9f92d57618b878e7b9909317059fb619f81745e9472fbfa8e734bdb8f061a74b"
+    },
+    {
+      "file": "lib/discover/candidate.ts",
+      "sha256": "3e4f871463f0f9e58469c3cd52ae48ab21310d83b8a722aff6f682215d3a28ce"
+    },
+    {
+      "file": "lib/discover/catalog.fixtures.ts",
+      "sha256": "881b0b1780d8b7c8a0e7085d92ed28fdfa990d36ab02e8d68f892ce496db38c7"
+    },
+    {
+      "file": "lib/discover/catalog.test.ts",
+      "sha256": "9cb1a6da7e64aca107b0fa03d7b8205a75606c75ace049b1a92d495f33c8112d"
+    },
+    {
+      "file": "lib/discover/catalog.ts",
+      "sha256": "98269e72601908852e31a2dbfb2821d75d54cfec6226a434bfaaceef70251b7c"
+    },
+    {
+      "file": "lib/discover/clock.test.ts",
+      "sha256": "9e6c488d691fcdd25abb43bba0d564fbd8b86ce56b5e932f5c08ed04f459fe6b"
+    },
+    {
+      "file": "lib/discover/clock.ts",
+      "sha256": "26e9fc356432c8471a69366dfe2c6d1fab1f3ba028d900614daef72e228b1196"
+    },
+    {
+      "file": "lib/discover/curated.ts",
+      "sha256": "24321aaaac43bb571f87e096d998025800b0837ad7d10c1bcfd7ec4e58f6d17a"
+    },
+    {
+      "file": "lib/discover/feed-availability.ts",
+      "sha256": "7e0f531208a3c5033f82757c4a74a68dbb6eff7ea52300f82c1dfc7db24e799b"
+    },
+    {
+      "file": "lib/discover/feed-evidence.fixtures.ts",
+      "sha256": "6b804c9b49967af338ba4d67e94e11a67cdf7f4aea15ac9eca1a13970022d8a7"
+    },
+    {
+      "file": "lib/discover/feed-evidence.test.ts",
+      "sha256": "710a05df37709be957ddffdc3c60232d1a858cd0ad652350e6e7e176ab7ca7bd"
+    },
+    {
+      "file": "lib/discover/feeds/bundled-catalog.test.ts",
+      "sha256": "3f37fb7cdeb2a966484d6c9ec6dd7ce76dcaff7ccc8a85135c1578329092aff1"
+    },
+    {
+      "file": "lib/discover/feeds/bundled-catalog.ts",
+      "sha256": "a5fc936c2babcb8d4518d18c42d4435bbd73f655044de403928ea441b322177c"
+    },
+    {
+      "file": "lib/discover/feeds/capture-command.test.ts",
+      "sha256": "5567c67c84857eb6c6ae208d7713e52f37d1126d6a55bb251c319f52419fe53b"
+    },
+    {
+      "file": "lib/discover/feeds/capture-recovery.test.ts",
+      "sha256": "d94bb0189b022ddd54041ab197d0ba8e70788b5548e8d28fac6ab2368fd23bfe"
+    },
+    {
+      "file": "lib/discover/feeds/capture-recovery.ts",
+      "sha256": "d026ba24a039fad4a49e9cd4fdb2e5fecd6016958ca2af6065b106137293d572"
+    },
+    {
+      "file": "lib/discover/feeds/capture-store.ts",
+      "sha256": "b9ed235fa17d2ea343ad446e35bf246d3d2027b824134e9d184b1225a27c4eef"
+    },
+    {
+      "file": "lib/discover/feeds/capture.test.ts",
+      "sha256": "1e10becb7abf716a70dc35801081ef03a62b91284b6267a79ab852b55992dfb0"
+    },
+    {
+      "file": "lib/discover/feeds/capture.ts",
+      "sha256": "6c089f7a522c198afad08d7fe32c452c8ae62b766e806cedacaf27eb7abd1660"
+    },
+    {
+      "file": "lib/discover/feeds/nasa.fixtures.ts",
+      "sha256": "db9874aaf6bfe0fcc13ee8313a8183728a5c17e2152881314924541de0cbbce2"
+    },
+    {
+      "file": "lib/discover/feeds/nasa.test.ts",
+      "sha256": "d7d779f92ba6a795028553bfd66baf5e2cb4b7dc7aedf6fd3fdda27a62fec09f"
+    },
+    {
+      "file": "lib/discover/feeds/nasa.ts",
+      "sha256": "65eb0b076adecf45785e8e6011c29614be46b0c4d9c319c6a36c127e8ea61b1f"
+    },
+    {
+      "file": "lib/discover/feeds/policy.ts",
+      "sha256": "55d498cff85e5b5ac70df43203d30b0022699d0b10a9bd59f256613427b5ec93"
+    },
+    {
+      "file": "lib/discover/feeds/published.ts",
+      "sha256": "f1893584accd549272ddc5b11f57fcc08cbaa4a5b0f1514241af371174969daf"
+    },
+    {
+      "file": "lib/discover/feeds/releases/nasa-2026-11-13.test.ts",
+      "sha256": "9a59c6a6fb8d22d5df86bb59c9b3aac29674e5ed0fa40ae9aa0662d6a8e8be28"
+    },
+    {
+      "file": "lib/discover/feeds/releases/nasa-2026-11-13.ts",
+      "sha256": "4575e6fc2b7b858979edb94efe71c6dce8b99b3c296812b28ff6c304901f3d76"
+    },
+    {
+      "file": "lib/discover/feeds/review-bundle.test.ts",
+      "sha256": "2f42452f6c2b634e2f414d48c43ba455f94c828aff23bb0465aa60e90293da5e"
+    },
+    {
+      "file": "lib/discover/feeds/review-bundle.ts",
+      "sha256": "8a91e53552bd7ae8bab72333756f4b76cdc36abc8740a9d3c648b37e6c019202"
+    },
+    {
+      "file": "lib/discover/feeds/review-staging.ts",
+      "sha256": "0003b33422f88e60b9718fc8a653b889fc3366ef6028f3b194ec838e3119b93e"
+    },
+    {
+      "file": "lib/discover/feeds/snapshot.test.ts",
+      "sha256": "f93c3a89aeabd4376197476adfa7374590d3c9a3f16669f77e0c0938f0fa9a0f"
+    },
+    {
+      "file": "lib/discover/feeds/snapshot.ts",
+      "sha256": "e4def1b7ff4c58e2cb320f3f1b53509a55ff0091b0d9ff96a61aae4274980822"
+    },
+    {
+      "file": "lib/discover/feeds/to-news.ts",
+      "sha256": "a659b339ccc1a1ba5bf96eba82e932b9d2f9f954bb2b9c75728d06a3fc105a19"
+    },
+    {
+      "file": "lib/discover/feeds/transport.test.ts",
+      "sha256": "1b28bd3f34e78fcebe370726a8e390f52f29a028594bf623a5dad90978f5125c"
+    },
+    {
+      "file": "lib/discover/feeds/transport.ts",
+      "sha256": "4b98276bf99b9a60f931ff9826d17ad06335815bed1eae00d600891254ec670a"
+    },
+    {
+      "file": "lib/discover/feeds/types.ts",
+      "sha256": "7abdefc5af632130a8c2b478a998711eff33d835cb7b867588715526b069bb74"
+    },
+    {
+      "file": "lib/discover/presentation.test.ts",
+      "sha256": "24aa20ce8fafeb8bb81eb366f8a4962cef593b5726e66301d9ee098cec47dce9"
+    },
+    {
+      "file": "lib/discover/presentation.ts",
+      "sha256": "1e9910a99752159f06cdd699bc8b3e7ecd9a93a09e3e098148e0a78b777bb33e"
+    },
+    {
+      "file": "lib/discover/sources.ts",
+      "sha256": "f893f14c47fa0b27dd03bb0e9f8cf09c9231a6fe02c937761728f2e0639b8ef9"
+    },
+    {
+      "file": "lib/discover/types.ts",
+      "sha256": "d2ae3e24cc48f4ac6ffb74114b22036db47469d157665e1e276216f177fb10c7"
+    },
+    {
+      "file": "lib/sample-data/events.ts",
+      "sha256": "48bd70435c70ce115656429bffcd0c89670b98e2fefa5f0a0e72dd68b2c7d881"
+    },
+    {
+      "file": "package-lock.json",
+      "sha256": "dbfe7690947aaef6c3befcf0ad80426749ba139000ecfe5794916b413f9c29ea"
+    },
+    {
+      "file": "package.json",
+      "sha256": "9f92d9c434c71b7e04c42faa28824e7526197b9206b22c72047443300a341ae7"
+    },
+    {
+      "file": "scripts/discover/capture-nasa.mjs",
+      "sha256": "53e3facf3d3af995f2ec7892aedeeb80b4ebda9f7a08c7eb54e54c8e967f46b1"
+    },
+    {
+      "file": "scripts/discover/dry-run-nasa.mjs",
+      "sha256": "0814fd7181d96a61d5f911d95c3a1e24ef506280647b823cf5cde162743963fe"
+    },
+    {
+      "file": "scripts/discover/preview-candidate.mjs",
+      "sha256": "c30681e16223c94a389fb0076bac20ab501eba459aa614aab50ffd2d68df6def"
+    },
+    {
+      "file": "scripts/discover/review-nasa.mjs",
+      "sha256": "30c13e95876230d6071fcb69b5ed162d278975620eabdd8f94faafddd6f2011a"
+    },
+    {
+      "file": "scripts/discover/sample-nasa.xml",
+      "sha256": "00ec0ed10e2aa932329457e596f5d8ab8c2020518b2404d7d579f67ee3b3b913"
+    },
+    {
+      "file": "vitest.config.mts",
+      "sha256": "c0eb32cf7b85ed35ed5221e2d0c7f48578c34bf8c1e925de56bd2f1a4227cc6a",
+      "hunks": "Add build/** exclusion only; preserve baseline worker policy. Working-tree maxWorkers hunk excluded."
+    }
+  ],
+  "excludedExistingChanges": [
+    "app/(app)/layout.tsx",
+    "components/auth",
+    "components/journal",
+    "components/assistant",
+    "lib/auth",
+    "lib/privacy",
+    "lib/store",
+    "lib/data",
+    "lib/supabase/proxy.ts",
+    "proxy.ts",
+    "next.config.ts",
+    "README.md",
+    "docs/privacy",
+    "docs/PRIVACY*",
+    "vitest.config.mts: preexisting maxWorkers hunk",
+    "scripts/discover/check-nasa-feed.ps1: superseded research probe, bypasses admission ledger"
+  ],
+  "environmentFilesCopied": false,
+  "notes": "Baseline .env.example template only; no real environment files or credentials. No Git index changes. Runtime/tooling/test scope; handoff docs to be selected separately. Legacy sample labels included after release-scope test identified this Discover dependency. Final review excludes the superseded research probe; preserve its local file. Manual refresh on owner request accepted November 13, 2026.",
+  "documentation": [
+    "docs/DISCOVER_APP_INTEGRATION_PROPOSAL.md",
+    "docs/DISCOVER_ARTIFACT_PACKAGING.md",
+    "docs/DISCOVER_BUNDLED_LOADER.md",
+    "docs/DISCOVER_CANDIDATE_PREVIEW.md",
+    "docs/DISCOVER_CAPTURE_PLAN.md",
+    "docs/DISCOVER_CAPTURE_RECOVERY.md",
+    "docs/DISCOVER_CATALOG.md",
+    "docs/DISCOVER_FEED_EVIDENCE.md",
+    "docs/DISCOVER_FEED_PROPOSAL.md",
+    "docs/DISCOVER_LOCAL_INTEGRATION.md",
+    "docs/DISCOVER_MANUAL_CAPTURE.md",
+    "docs/DISCOVER_MOBILE_ACCEPTANCE.md",
+    "docs/DISCOVER_OFFLINE_IMPORTER.md",
+    "docs/DISCOVER_REFRESH_PROPOSAL.md",
+    "docs/DISCOVER_RELEASE_READINESS.md",
+    "docs/DISCOVER_RELEASE_REVIEW.md",
+    "docs/DISCOVER_REVIEW_BUNDLES.md",
+    "docs/DISCOVER_SNAPSHOT_RESTORATION.md",
+    "docs/discover/ARTIFACT_PACKAGING_AUDIT_2026-11-13.json",
+    "docs/discover/DISCOVER_CANDIDATE_390_2026-11-13.png",
+    "docs/discover/DISCOVER_MOBILE_390_2026-11-12.png",
+    "docs/discover/DISCOVER_REPORTING_390_2026-11-13.png",
+    "docs/discover/DISCOVER_ROUTE_390_2026-11-13.png",
+    "docs/discover/DISCOVER_SELECTED_390_2026-11-13.png",
+    "docs/discover/INTEGRATION_AUDIT_2026-11-13.json",
+    "docs/discover/NASA_CAPTURE_2026-11-13.json",
+    "docs/discover/NASA_FEED_TRANSPORT_2026-11-12.json",
+    "docs/discover/NASA_FEED_TRANSPORT_2026-11-12_073649_UTC.json",
+    "docs/discover/RELEASE_READINESS_2026-11-13.json"
+  ],
+  "review": {
+    "completedAt": "2026-11-13T22:49:01.934Z",
+    "codeFiles": 51,
+    "modified": 6,
+    "added": 45,
+    "manualRefreshOnRequest": "owner-approved",
+    "commitAuthorized": true,
+    "deploymentAuthorized": false,
+    "deviceAcceptance": "pending",
+    "reviewPatch": "build/discover-release-review/discover-release.patch",
+    "commitAuthorizationSource": "Owner reply: yes do it, to the scoped Discover-only commit request; November 13, 2026"
+  }
+}
