@@ -3,7 +3,8 @@ import { mergePlayProgress } from "./play-store";
 
 export type GameId="rune-lock"|"chess"|"echoes";
 export interface PuzzleIdentity {game:GameId;version:number;date:string;difficulty:string}
-export const gameCatalog=[{id:"rune-lock",name:"Rune Lock",version:1,href:"/play/rune-lock",description:"Four runes. Six guesses. A new lock each day."},{id:"chess",name:"Daily chess",version:1,href:"/play/chess",description:"Find a tactic at your chosen difficulty."},{id:"echoes",name:"Echoes",version:1,href:"/play/echoes",description:"Three original scenes. Find the ideas within their images."}] as const;
+// The two device-local games deliberately do not extend the cloud-sync GameId contract.
+export const gameCatalog=[{id:"detective",name:"The Casebook",version:1,href:"/play/detective",description:"Reconstruct a case using an interactive deduction grid."},{id:"labyrinth",name:"The Labyrinth",version:1,href:"/play/labyrinth",description:"Draw a route that satisfies every row, column, and checkpoint."},{id:"rune-lock",name:"Rune Lock",version:1,href:"/play/rune-lock",description:"Four runes. Six guesses. A new lock each day."},{id:"chess",name:"Daily chess",version:1,href:"/play/chess",description:"Find a tactic at your chosen difficulty."},{id:"echoes",name:"Echoes",version:1,href:"/play/echoes",description:"Three original scenes. Find the ideas within their images."}] as const;
 export const runeIdentity=(date:string):PuzzleIdentity=>({game:"rune-lock",version:1,date,difficulty:"standard"});
 export const puzzleKey=(identity:PuzzleIdentity)=>`${identity.game}/v${identity.version}/${identity.date}/${identity.difficulty}`;
 export interface GameProgressRecord<State> {identity:PuzzleIdentity;state:State;revision:number}
