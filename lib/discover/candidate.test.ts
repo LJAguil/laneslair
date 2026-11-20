@@ -4,12 +4,13 @@ import { describe, expect, it } from "vitest";
 import { DiscoverScreen, DiscoverView } from "@/components/discover/discover-view";
 import { candidateCatalog, candidateCheckedAt, candidateCurationNote } from "./candidate";
 import { candidateNews, candidateNewsCheckedAt } from "./candidate-news";
+import { refreshAdditions, refreshCheckedAt } from "./refresh-2026-11-18";
 import { curatedCatalog, catalogCheckedAt } from "./curated";
 import { catalogErrors, assessItem } from "./catalog";
 import { catalogEntries } from "./presentation";
 import { discoverSources } from "./sources";
 
-const now = Date.parse(candidateNewsCheckedAt);
+const now = Date.parse(refreshCheckedAt);
 describe("local catalog candidate and preserved historical baseline", () => {
   it("validates candidate records against their actual review clock", () => {
     for (const item of candidateCatalog) expect(catalogErrors(item, discoverSources, now), item.id).toEqual([]);
@@ -18,7 +19,8 @@ describe("local catalog candidate and preserved historical baseline", () => {
   it("retains original summaries and checks rather than renewing the whole batch", () => {
     const originalNews = curatedCatalog.filter(item => item.kind === "news");
     const reviewedIds = new Set(candidateNews.map(item => item.id));
-    expect(candidateCatalog.filter(item => item.kind === "news" && !reviewedIds.has(item.id)))
+    const addedIds = new Set(refreshAdditions.map(item => item.id));
+    expect(candidateCatalog.filter(item => item.kind === "news" && !reviewedIds.has(item.id) && !addedIds.has(item.id)))
       .toEqual(originalNews.filter(item => !reviewedIds.has(item.id)));
     for (const item of originalNews) expect(item.evidence.verifiedAt).toBe(catalogCheckedAt);
     expect(curatedCatalog).toHaveLength(10);
@@ -33,20 +35,22 @@ describe("local catalog candidate and preserved historical baseline", () => {
       expect(item).toMatchObject({ title: baseline.title, author: baseline.author, publishedAt: null,
         publishedOn: baseline.publishedOn, format: "reporting", evidence: { url: baseline.evidence.url, verifiedAt: candidateNewsCheckedAt } });
       expect(item.summary).toMatchObject({ kind: "original", writtenAt: candidateNewsCheckedAt });
-      expect(assessItem(item, discoverSources, now).placement).toBe("main");
+      expect(assessItem(item, discoverSources, Date.parse(candidateNewsCheckedAt)).placement).toBe("main");
       expect(assessItem(item, discoverSources, now + 24 * 3_600_000 + 1).placement).not.toBe("main");
     }
     expect(candidateNewsCheckedAt).not.toBe(candidateCheckedAt);
     const inaccessible = candidateCatalog.find(item => item.id === "illuminator-computers-2026-11-10")!;
     expect(assessItem(inaccessible, discoverSources, now).placement).not.toBe("main");
   });
-  it("keeps conflicting addresses and incomplete food terms outside recommendations", () => {
+  it("keeps expired disputed listings and incomplete food outside recommendations", () => {
     const entries = catalogEntries(candidateCatalog, discoverSources, now);
     const disputed = entries.find(entry => entry.item.id === "creative-meetup-2026-11-16")!;
-    expect(disputed.assessment).toMatchObject({ state: "needs-confirmation", placement: "review-only" });
+    expect(disputed.assessment).toMatchObject({ state: "expired", placement: "archive" });
     const offers = entries.filter(entry => entry.item.kind === "deal");
     expect(offers).toHaveLength(2);
-    for (const offer of offers) expect(offer.assessment.placement).toBe("review-only");
+    for (const offer of offers) expect(offer.assessment.placement).not.toBe("main");
+    expect(offers.find(entry => entry.item.id === "wendys-classic-combo-undated")?.assessment.placement).toBe("review-only");
+    expect(offers.find(entry => entry.item.id === "wendys-frosty-2026-11-15")?.assessment.state).toBe("expired");
   });
   it("preserves expirations and unknown prices instead of fabricating current availability", () => {
     const entries = catalogEntries(candidateCatalog, discoverSources, now);
