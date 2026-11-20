@@ -17,7 +17,7 @@ if (args.length === 1 && args[0] === "--help") {
 } else {
   const preview = path.join(root, "build/discover-candidate-preview"), output = path.join(preview, "server-modules");
   await mkdir(output, { recursive: true }); await writeFile(path.join(output, "package.json"), '{"type":"commonjs"}');
-  for (const name of ["types", "curated", "candidate-news", "refresh-2026-11-18", "candidate", "sources", "catalog", "feed-availability", "feeds/policy", "feeds/nasa", "feeds/snapshot", "feeds/transport", "feeds/review-bundle", "feeds/to-news", "feeds/bundled-catalog", "feeds/review-staging"]) {
+  for (const name of ["types", "curated", "candidate-news", "refresh-2026-11-18", "refresh-2026-11-19", "candidate", "sources", "catalog", "daily/policy", "feed-availability", "feeds/policy", "feeds/nasa", "feeds/snapshot", "feeds/transport", "feeds/review-bundle", "feeds/to-news", "feeds/bundled-catalog", "feeds/review-staging"]) {
     const target = path.join(output, `${name}.js`); await mkdir(path.dirname(target), { recursive: true });
     const source = await readFile(path.join(root, "lib/discover", `${name}.ts`), "utf8");
     await writeFile(target, ts.transpileModule(source, { fileName: `${name}.ts`, compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText);

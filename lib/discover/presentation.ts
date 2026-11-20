@@ -4,7 +4,7 @@ import type { DiscoverItem, DiscoverSource, EventWindow, NewsItem } from "./type
 export interface CatalogEntry { item: DiscoverItem; assessment: Assessment }
 
 function resolveTier(group: DiscoverItem[], sources: readonly DiscoverSource[], now: number): CatalogEntry {
-  const checkedAt = (item: DiscoverItem) => item.evidence.level === "publisher-feed" ? Date.parse(item.evidence.representationCheckedAt) : item.evidence.verifiedAt ? Date.parse(item.evidence.verifiedAt) : -Infinity;
+  const checkedAt = (item: DiscoverItem) => item.evidence.level === "publisher-feed" || item.evidence.level === "subscription-feed" ? Date.parse(item.evidence.representationCheckedAt) : item.evidence.verifiedAt ? Date.parse(item.evidence.verifiedAt) : -Infinity;
   const sorted = [...group].sort((a, b) => checkedAt(b) - checkedAt(a));
   const item = sorted[0];
   const signatures = new Set(group.map(candidate => JSON.stringify({ ...candidate, id: undefined, evidence: undefined, articleUrl: candidate.kind === "news" ? canonicalUrl(candidate.evidence.url) : undefined })));
@@ -18,8 +18,8 @@ function resolveTier(group: DiscoverItem[], sources: readonly DiscoverSource[], 
 export function catalogEntries(items: readonly DiscoverItem[], sources: readonly DiscoverSource[], now: number): CatalogEntry[] {
   const valid = items.filter(item => catalogErrors(item, sources, now).length === 0);
   return groupDuplicates(valid).map(group => {
-    const curated = group.filter(item => item.evidence.level !== "publisher-feed");
-    const feeds = group.filter(item => item.evidence.level === "publisher-feed");
+    const curated = group.filter(item => item.evidence.level !== "publisher-feed" && item.evidence.level !== "subscription-feed");
+    const feeds = group.filter(item => item.evidence.level === "publisher-feed" || item.evidence.level === "subscription-feed");
     if (!curated.length) return resolveTier(feeds, sources, now);
     const editorial = resolveTier(curated, sources, now);
     // A feed cannot revive an editorial withdrawal/cancellation or bypass a conflict.

@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { DiscoverScreen, DiscoverView } from "@/components/discover/discover-view";
-import { candidateCatalog, candidateCheckedAt, candidateCurationNote } from "./candidate";
+import { november18Catalog as candidateCatalog, candidateCheckedAt, candidateCurationNote } from "./candidate";
 import { candidateNews, candidateNewsCheckedAt } from "./candidate-news";
 import { refreshAdditions, refreshCheckedAt } from "./refresh-2026-11-18";
 import { curatedCatalog, catalogCheckedAt } from "./curated";

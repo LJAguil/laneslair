@@ -1,4 +1,5 @@
 import type { NASA_FEED_URL } from "./feeds/policy";
+import type { DailySourceId } from "./daily/policy";
 
 /** Public Discover content only. No account data, ingestion, or persistence. */
 export type Instant = string; // ISO 8601 with seconds and explicit Z/offset; validated before use.
@@ -39,7 +40,18 @@ export interface PublisherFeedEvidence {
   representationCheckedAt: Instant;
 }
 
-export type Evidence = EditorialEvidence | PublisherFeedEvidence;
+export interface SubscriptionEvidence {
+  level: "subscription-feed";
+  sourceId: DailySourceId;
+  sourceItemId: string;
+  url: string;
+  feedUrl: string;
+  verifiedAt: null;
+  sourceUpdatedAt: null;
+  fetchedAt: Instant;
+  representationCheckedAt: Instant;
+}
+export type Evidence = EditorialEvidence | PublisherFeedEvidence | SubscriptionEvidence;
 
 export type Window =
   | { kind: "timed"; startsAt: Instant; endsAt: Instant; timeZone: string }
@@ -58,7 +70,7 @@ interface BaseItem<E extends Evidence = EditorialEvidence> {
   duplicateGroup?: string;
 }
 
-export interface EventItem extends BaseItem {
+export interface EventItem extends BaseItem<EditorialEvidence | SubscriptionEvidence> {
   kind: "event";
   category: "trivia" | "music" | "community" | "campus" | "arts" | "outdoors" | "other";
   description: string;

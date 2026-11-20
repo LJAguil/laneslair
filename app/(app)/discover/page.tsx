@@ -16,5 +16,5 @@ export default function DiscoverPage() {
 
 async function PublishedDiscover() {
   const catalog = await publishedDiscoverCatalog();
-  return <DiscoverView items={catalog.items} feed={catalog.feed} curationNote={candidateCurationNote} />;
+  return <DiscoverView items={catalog.items} feed={catalog.feed} updates={catalog.updates} curationNote={candidateCurationNote} />;
 }

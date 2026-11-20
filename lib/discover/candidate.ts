@@ -1,6 +1,7 @@
 import { curatedCatalog } from "./curated";
 import { candidateNews } from "./candidate-news";
 import { applyRefreshChecks, refreshAdditions } from "./refresh-2026-11-18";
+import { november19Events, november19News } from "./refresh-2026-11-19";
 import type { DealItem, DiscoverItem, EditorialEvidence, EventItem } from "./types";
 
 /** Explicit editorial selection; source checks are independent of build/release time. */
@@ -60,6 +61,7 @@ const additions: DiscoverItem[] = [
 ];
 
 function refreshed(item: DiscoverItem): DiscoverItem {
+  if (item.evidence.level === "subscription-feed") return item;
   const reviewedNews = candidateNews.find(news => news.id === item.id);
   if (reviewedNews) return reviewedNews;
   if (item.kind === "event" && ["cedartown-shopping-2026-11-13", "local-music-2026-11-13"].includes(item.id)) {
@@ -74,4 +76,6 @@ function refreshed(item: DiscoverItem): DiscoverItem {
   // No batch-wide renewal: unreviewed articles and summaries keep their checks.
   return item;
 }
-export const candidateCatalog: readonly DiscoverItem[] = [...[...curatedCatalog.map(refreshed), ...additions].map(applyRefreshChecks), ...refreshAdditions];
+/** Frozen earlier selection for historical evidence tests; new batches keep their own clocks. */
+export const november18Catalog: readonly DiscoverItem[] = [...[...curatedCatalog.map(refreshed), ...additions].map(applyRefreshChecks), ...refreshAdditions];
+export const candidateCatalog: readonly DiscoverItem[] = [...november18Catalog, ...november19Events, ...november19News];

@@ -46,6 +46,7 @@ export const refreshAdditions: readonly DiscoverItem[] = [
 
 /** Only these two existing pages were reinspected. No batch-wide timestamp renewal. */
 export function applyRefreshChecks(item: DiscoverItem): DiscoverItem {
+  if (item.evidence.level === "subscription-feed") return item;
   if ((item.kind === "event" && item.id === "prescott-holocaust-exhibit-2026") ||
     (item.kind === "deal" && item.id === "wendys-classic-combo-undated")) {
     return { ...item, evidence: { ...item.evidence, verifiedAt: refreshCheckedAt } };

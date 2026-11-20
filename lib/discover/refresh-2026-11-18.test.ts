@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { candidateCatalog, candidateCheckedAt } from "./candidate";
+import { november18Catalog as candidateCatalog, candidateCheckedAt } from "./candidate";
 import { candidateNewsCheckedAt } from "./candidate-news";
 import { refreshAdditions, refreshCheckedAt } from "./refresh-2026-11-18";
 import { discoverSources } from "./sources";

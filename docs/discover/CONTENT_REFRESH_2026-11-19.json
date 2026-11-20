@@ -1,0 +1,33 @@
+{
+  "evaluatedAt": "2026-11-20T04:35:33.050Z",
+  "localCheckDay": "2026-11-19 America/Chicago",
+  "itemCount": 46,
+  "counts": {
+    "event": {
+      "main": 7,
+      "review-only": 0,
+      "archive": 10,
+      "national-check-local": 0
+    },
+    "news": {
+      "main": 12,
+      "review-only": 9,
+      "archive": 6,
+      "national-check-local": 0
+    },
+    "deal": {
+      "main": 0,
+      "review-only": 1,
+      "archive": 1,
+      "national-check-local": 0
+    }
+  },
+  "feedCheckedAt": "2026-11-13T19:30:14.739Z",
+  "feedItemsInMain": 0,
+  "sourceAutomationApprovals": 0,
+  "newNASAFeedRequests": 0,
+  "manualNASAArticleInspections": 2,
+  "browserCheck": "unavailable in this chat",
+  "feedEvidenceRetained": true,
+  "presentationModule": "transpiled from current lib/discover/presentation.ts"
+}

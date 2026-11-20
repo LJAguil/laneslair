@@ -12,25 +12,29 @@ import { bookmarkKey, catalogEntries, displayInstant, displayWindow, newsFormatL
 import { discoverClockSnapshot, discoverServerClockSnapshot, subscribeDiscoverClock } from "@/lib/discover/clock";
 import { unavailableFeed, type FeedAvailability } from "@/lib/discover/feed-availability";
 import { FEED_FRESHNESS_MS } from "@/lib/discover/feeds/policy";
+import { matchesEventDate, type EventDateFilter } from "@/lib/discover/event-filters";
+import { dailyUpdatesOff, type DailyUpdateStatus } from "@/lib/discover/daily/status";
+import { DAILY_FRESHNESS_MS } from "@/lib/discover/daily/policy";
 
 type Tab = DiscoverItem["kind"];
 const tabs: { id: Tab; label: string }[] = [{ id: "event", label: "Things to do" }, { id: "news", label: "News" }, { id: "deal", label: "Food deals" }];
 const topicLabels: Record<string, string> = { louisiana: "Louisiana / local", technology: "Technology", science: "Science", national: "National", world: "World", discovery: "Discovery mix" };
 const actionClass = "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line px-3 py-2 text-sm text-muted hover:border-line-strong hover:text-fg";
 
-export function DiscoverView({ items = curatedCatalog, feed = unavailableFeed, curationNote }: { items?: readonly DiscoverItem[]; feed?: FeedAvailability; curationNote?: string }) {
+export function DiscoverView({ items = curatedCatalog, feed = unavailableFeed, updates = dailyUpdatesOff, curationNote }: { items?: readonly DiscoverItem[]; feed?: FeedAvailability; updates?: DailyUpdateStatus; curationNote?: string }) {
   const now = useSyncExternalStore(subscribeDiscoverClock, discoverClockSnapshot, discoverServerClockSnapshot);
-  return <DiscoverScreen items={items} sources={discoverSources} feed={feed} now={now} curationNote={curationNote} />;
+  return <DiscoverScreen items={items} sources={discoverSources} feed={feed} updates={updates} now={now} curationNote={curationNote} />;
 }
 
 /** Public-content-only surface; no global store, auth, personal records or fetches. */
-export function DiscoverScreen({ items, sources, now, initialTab = "event", feed = unavailableFeed, curationNote }: {
-  items: readonly DiscoverItem[]; sources: readonly DiscoverSource[]; now: number | null; initialTab?: Tab; feed?: FeedAvailability; curationNote?: string;
+export function DiscoverScreen({ items, sources, now, initialTab = "event", feed = unavailableFeed, updates = dailyUpdatesOff, curationNote }: {
+  items: readonly DiscoverItem[]; sources: readonly DiscoverSource[]; now: number | null; initialTab?: Tab; feed?: FeedAvailability; updates?: DailyUpdateStatus; curationNote?: string;
 }) {
   const id = useId();
   const [tab, setTab] = useState<Tab>(initialTab);
   const [travel, setTravel] = useState<"nearby" | "trip">("nearby");
   const [budget, setBudget] = useState("all");
+  const [eventDate, setEventDate] = useState<EventDateFilter>("all");
   const [topics, setTopics] = useState<string[]>([...discoverDefaults.newsTopics]);
   const [saved, setSaved] = useState<string[]>([]);
   const [savedOnly, setSavedOnly] = useState(false);
@@ -39,7 +43,7 @@ export function DiscoverScreen({ items, sources, now, initialTab = "event", feed
   const toggleSaved = (itemId: string) => setSaved(previous => previous.includes(itemId) ? previous.filter(value => value !== itemId) : [...previous, itemId]);
   const matches = (item: DiscoverItem) => {
     if (item.kind !== tab || (savedOnly && !saved.includes(bookmarkKey(item)))) return false;
-    if (item.kind === "event") return item.travel === travel && (budget === "all" || item.price.kind === "free" || (budget === "budget" && item.price.kind === "known" && item.price.amount <= 20));
+    if (item.kind === "event") return item.travel === travel && (now === null || matchesEventDate(item.window, now, eventDate)) && (budget === "all" || item.price.kind === "free" || (budget === "budget" && item.price.kind === "known" && item.price.amount <= 20));
     if (item.kind === "news") return item.topics.some(topic => topics.includes(topic));
     return true;
   };
@@ -68,7 +72,7 @@ export function DiscoverScreen({ items, sources, now, initialTab = "event", feed
       actions={<span className="inline-flex items-center gap-1.5 text-sm text-muted"><MapPin className="h-4 w-4" aria-hidden="true" />Ruston & Lincoln Parish</span>} />
     <div className="mb-5 rounded-xl border border-line bg-panel px-4 py-3 text-sm text-muted">
       <p>{curationNote ?? <>Curated source batch checked {displayInstant(catalogCheckedAt)}. Feed checks are labeled separately on stories.</>}</p>
-      <p className="mt-1 text-xs text-subtle">Updates are manual. Older picks move out of current results until rechecked. Monroe is included in nearby coverage as picks become available; trips stay separate.</p>
+      <p className="mt-1 text-xs text-subtle">{updates.enabled ? "Selected feeds update daily. Curated picks and food offers still need manual checks." : "Updates are manual."} Older picks move out of current results until rechecked. Monroe is included in nearby coverage as picks become available; trips stay separate.</p>
     </div>
     <div role="tablist" aria-label="Discover sections" className="mb-5 grid grid-cols-3 gap-1 rounded-xl border border-line bg-panel p-1">
       {tabs.map((option, index) => <button key={option.id} type="button" role="tab" id={`${id}-tab-${option.id}`} aria-controls={`${id}-panel`} aria-selected={tab === option.id} tabIndex={tab === option.id ? 0 : -1}
@@ -80,10 +84,12 @@ export function DiscoverScreen({ items, sources, now, initialTab = "event", feed
         {tab === "event" && <>
           <div role="group" aria-label="Travel range" className="flex flex-wrap gap-2">{(["nearby", "trip"] as const).map(value => <button key={value} type="button" aria-pressed={travel === value} onClick={() => setTravel(value)} className={cn(actionClass, travel === value && "border-accent/40 bg-accent-soft text-fg")}>{value === "nearby" ? "Nearby" : "Weekend trips"}</button>)}</div>
           <label className="text-sm text-muted">Price <select value={budget} onChange={event => setBudget(event.target.value)} className="ml-1 min-h-11 max-w-full rounded-lg border border-line bg-panel px-2 text-fg"><option value="all">All prices</option><option value="budget">Free / $20 or less</option><option value="free">Free</option></select></label>
+          <label className="text-sm text-muted">When <select value={eventDate} onChange={event => setEventDate(event.target.value as EventDateFilter)} className="ml-1 min-h-11 max-w-full rounded-lg border border-line bg-panel px-2 text-fg"><option value="all">All checked dates</option><option value="today">Today</option><option value="week">Next 7 days</option></select></label>
         </>}
         <button type="button" aria-pressed={savedOnly} onClick={() => setSavedOnly(value => !value)} className={cn(actionClass, savedOnly && "border-accent/40 bg-accent-soft text-fg")}><Bookmark className="h-4 w-4" aria-hidden="true" />Saved this visit</button>
       </div>
-      {tab === "news" && <FeedNotice feed={feed} now={now} />}
+      {updates.enabled && tab !== "deal" && <DailyNotice updates={updates} kind={tab} now={now} />}
+      {tab === "news" && !updates.enabled && <FeedNotice feed={feed} now={now} />}
       {tab === "news" && <details className="rounded-xl border border-line bg-panel p-3">
         <summary className="min-h-11 cursor-pointer py-2 text-sm font-medium">News interests · {topics.length} selected</summary>
         <fieldset className="mt-2"><legend className="text-xs text-subtle">Choose what to include. Changes last for this visit; nothing is inferred from your other app activity.</legend>
@@ -92,6 +98,7 @@ export function DiscoverScreen({ items, sources, now, initialTab = "event", feed
       </details>}
       <p className="text-xs text-subtle">{tab === "event" ? "Mostly free or under $20, with a few higher-cost options. Unknown prices stay labeled; check admission before going." : tab === "news" ? "A small starting mix, not comprehensive coverage. Original summaries link you to the publisher’s full story." : "A national promotion does not confirm Ruston participation. Check the selected restaurant and all offer terms before ordering."} Bookmarks last until you leave or reload this page.</p>
       {now === null ? <p role="status" className="py-8 text-center text-sm text-muted">Checking dates and freshness…</p> : <>
+        <p role="status" className="text-sm text-muted">{main.length} current {tab === "news" ? main.length === 1 ? "story" : "stories" : main.length === 1 ? "pick" : "picks"} match your filters.{tab === "event" && eventDate !== "all" ? " Dates follow each event’s local time zone." : ""}</p>
         {visible.length ? <div className="space-y-4">{cards(visible)}</div> : <EmptyState title={savedOnly ? "No saved picks in this view" : tab === "deal" ? "No confirmed nearby deals right now" : tab === "news" ? "No current stories for these interests" : travel === "trip" ? "No checked weekend trips yet" : "No current outings in this view"} description="Try another filter or browse the sources below. Picks needing a fresh check are kept separate." />}
         {tab === "news" && main.length > newsLimit && <button type="button" className={cn(actionClass, "w-full")} onClick={() => setNewsLimit(value => value + 4)}>Load more stories</button>}
         {national.length > 0 && <section aria-label="National offers"><h2 className="mb-2 text-base font-semibold">National offers · check local participation</h2><p className="mb-3 text-sm text-muted">Public terms have been checked; availability at a nearby restaurant is still unknown.</p><div className="space-y-4">{cards(national)}</div></section>}
@@ -112,6 +119,15 @@ function FeedNotice({ feed, now }: { feed: FeedAvailability; now: number | null 
       : feed.itemCount === 0 ? "No additional NASA stories in this snapshot."
       : `NASA feed checked ${displayInstant(feed.checkedAt)}. Stories are not editorially checked.`;
   return <p role="status" aria-live="polite" className="rounded-xl border border-line bg-panel p-3 text-sm text-muted [overflow-wrap:anywhere]">{text}</p>;
+}
+
+function DailyNotice({ updates, kind, now }: { updates: DailyUpdateStatus; kind: "news" | "event"; now: number | null }) {
+  return <div role="status" className="rounded-xl border border-line bg-panel p-3 text-sm text-muted">
+    <p>Daily feed updates · source metadata, not editorial verification</p>
+    {!updates.available ? <p className="mt-1">Automatic updates are unavailable. Saved curated picks retain their own check dates.</p> : updates.sources.filter(source => source.kind === kind).map(source => <p key={source.name} className="mt-1 text-xs">
+      {source.name}: {source.checkedAt ? <>feed checked {displayInstant(source.checkedAt)}{now !== null && now - Date.parse(source.checkedAt) >= DAILY_FRESHNESS_MS ? " · stale" : ""}</> : "no successful update yet"}{source.failed ? " · latest attempt failed or unfinished; previous data retained" : ""}
+    </p>)}
+  </div>;
 }
 
 function Outbound({ href, children }: { href: string; children: ReactNode }) {
@@ -137,7 +153,7 @@ export function DiscoverItemCard({ entry, source, saved, onSave }: { entry: Cata
   const { item, assessment } = entry;
   const SaveIcon = saved ? BookmarkCheck : Bookmark;
   const stateLabel = { active: item.kind === "deal" || (item.kind === "event" && item.window.kind === "dates") ? "Within listed dates" : "Happening now", upcoming: "Upcoming", current: "Current", stale: "Stale · recheck needed", "needs-confirmation": "Needs confirmation", canceled: "Canceled", postponed: "Postponed", withdrawn: "Withdrawn", expired: "Past its listing window", invalid: "Unavailable" }[assessment.state];
-  const evidenceLabel = { "organizer-confirmed": "Organizer source checked", "official-listing": "Official listing checked", "publisher-reported": "Publisher source checked", "publisher-feed": "Publisher feed · not editorially checked", unverified: "Unverified" }[item.evidence.level];
+  const evidenceLabel = { "organizer-confirmed": "Organizer source checked", "official-listing": "Official listing checked", "publisher-reported": "Publisher source checked", "publisher-feed": "Publisher feed · not editorially checked", "subscription-feed": "Subscribed feed · not editorially checked", unverified: "Unverified" }[item.evidence.level];
   return <article className="min-w-0 rounded-2xl border border-line bg-panel p-4 sm:p-5 [overflow-wrap:anywhere]">
     <div className="flex items-start justify-between gap-2">
       <div className="flex min-w-0 flex-wrap gap-1.5"><Badge tone={assessment.placement === "review-only" || assessment.placement === "archive" ? "warning" : "accent"}>{stateLabel}</Badge><Badge>{item.kind === "news" ? newsFormatLabels[item.format] : item.kind === "event" ? item.category : "Food offer"}</Badge></div>
@@ -154,6 +170,7 @@ export function DiscoverItemCard({ entry, source, saved, onSave }: { entry: Cata
     {item.kind === "news" && <>
       <p className="mt-2 text-xs text-subtle">{source.name}{item.author ? ` · ${item.author}` : ""}</p>
       <p className="mt-1 text-xs text-subtle">Published {publicationLabel(item)}</p>
+      <p className="mt-2 text-xs text-accent-strong">Topics: {item.topics.map(topic => topicLabels[topic] ?? topic).join(" · ")}</p>
       <p className="mt-3 text-sm leading-relaxed text-muted">{item.summary.kind === "original" ? item.summary.text : `Summary unavailable: ${item.summary.reason}`}</p>
       <p className="mt-2 text-xs text-subtle">{item.summary.kind === "original" ? "Original Discover summary · " : ""}{item.access === "paywall" ? "Publisher paywall" : item.access === "open" ? "Article opened without a paywall when checked" : "Article access unknown"}</p>
     </>}
@@ -161,7 +178,7 @@ export function DiscoverItemCard({ entry, source, saved, onSave }: { entry: Cata
     {assessment.errors.length > 0 && <p className="mt-2 text-xs text-warning">{assessment.errors.join(" ")}</p>}
     <div className="mt-4 border-t border-line pt-3">
       <p className="text-xs text-subtle">{evidenceLabel} · {source.name}</p>
-      {item.evidence.level === "publisher-feed" ? <>
+      {item.evidence.level === "publisher-feed" || item.evidence.level === "subscription-feed" ? <>
         <p className="mt-1 text-xs text-subtle">Feed checked: {displayInstant(item.evidence.representationCheckedAt)}</p>
         <p className="mt-1 text-xs text-subtle">Feed loaded: {displayInstant(item.evidence.fetchedAt)}</p>
       </> : <p className="mt-1 text-xs text-subtle">Last checked: {item.evidence.verifiedAt ? displayInstant(item.evidence.verifiedAt) : "Not verified"}</p>}

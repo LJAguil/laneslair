@@ -1,5 +1,6 @@
 import type { DiscoverItem, DiscoverSource, EventWindow, Instant } from "./types";
 import { FEED_FRESHNESS_MS, FEED_PUBLICATION_AGE_MS, NASA_FEED_URL, NASA_LIMITS, nasaArticleUrl } from "./feeds/policy";
+import { DAILY_FRESHNESS_MS, DAILY_NEWS_AGE_MS, dailyArticleUrl, dailySources } from "./daily/policy";
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
@@ -73,6 +74,12 @@ export function catalogErrors(item: DiscoverItem, sources: readonly DiscoverSour
       if (!item.publishedAt || instant(item.publishedAt) > instant(evidence.fetchedAt)) errors.push("Feed publication time must precede retrieval");
       if (item.summary.kind !== "unavailable" || item.access !== "unknown" || item.format !== "institutional-update" || item.publishedOn !== undefined || (item.author !== null && item.author.length > NASA_LIMITS.author)) errors.push("Unsupported feed content claims");
     }
+  } else if (item.evidence.level === "subscription-feed") {
+    const evidence = item.evidence, definition = dailySources[evidence.sourceId];
+    checkedTime(evidence.representationCheckedAt, "subscription check time");
+    if (!definition || item.kind !== definition.kind || evidence.feedUrl !== definition.url || dailyArticleUrl(evidence.sourceId, evidence.url) !== evidence.url) errors.push("Unsupported subscription");
+    if (evidence.verifiedAt !== null || evidence.sourceUpdatedAt !== null || !evidence.fetchedAt || !evidence.representationCheckedAt || instant(evidence.fetchedAt) > instant(evidence.representationCheckedAt)) errors.push("Invalid subscription evidence");
+    if (item.kind === "news" && (!item.publishedAt || instant(item.publishedAt) > instant(evidence.fetchedAt) || item.summary.kind !== "unavailable" || item.access !== "unknown")) errors.push("Unsupported subscription claims");
   } else if (item.evidence.level !== "unverified" && item.evidence.verifiedAt === null) errors.push("Evidence requires editorial verification time");
   if (item.kind !== "news" && item.window !== null && !validWindow(item.window)) errors.push("Invalid occurrence or validity window");
   if (item.kind === "event") {
@@ -122,6 +129,11 @@ export function assessItem(item: DiscoverItem, sources: readonly DiscoverSource[
   const day = window ? zonedDay(now, window.timeZone) : "";
   if (window && (window.kind === "dates" ? day >= window.endDateExclusive
     : now >= instant(window.kind === "start-only" ? window.startsAt : window.endsAt))) return result("expired", "archive");
+  if (item.evidence.level === "subscription-feed") {
+    if (item.kind === "news" && now - instant(item.publishedAt!) >= DAILY_NEWS_AGE_MS) return result("expired", "archive");
+    if (now - instant(item.evidence.representationCheckedAt) >= DAILY_FRESHNESS_MS) return result("stale", "review-only");
+    return result(item.kind === "news" ? "current" : window!.kind === "dates" ? day < window!.startDate ? "upcoming" : "active" : now < instant(window!.startsAt) ? "upcoming" : "active", "main");
+  }
   if (item.kind === "deal" && (!window || item.requirements.reviewedAt === null)) return result("needs-confirmation", "review-only");
   if (item.evidence.level === "unverified" || item.evidence.verifiedAt === null) return result("needs-confirmation", "review-only");
   if (item.evidence.sourceUpdatedAt !== null && instant(item.evidence.sourceUpdatedAt) > instant(item.evidence.verifiedAt)) return result("needs-confirmation", "review-only");
