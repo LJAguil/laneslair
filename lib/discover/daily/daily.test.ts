@@ -204,7 +204,7 @@ describe("automatic catalog integration", () => {
     const result = await readDailyCatalog({ enabled: true, read: async () => JSON.stringify(snapshot), now: NOW });
     const html = renderToStaticMarkup(createElement(DiscoverScreen, { ...result, sources: discoverSources, now: NOW }));
     expect(html).toContain("Subscribed feed · not editorially checked");
-    expect(html).toContain("Daily feed updates");
+    expect(html).toContain("Saved feed updates");
     expect(html).toContain("Feed checked:");
     expect(html).toContain("Price unknown");
     expect(html).not.toContain("Organizer source checked");

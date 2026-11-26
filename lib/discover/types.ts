@@ -15,6 +15,7 @@ export interface DiscoverSource {
   automation: "not-approved"; // A public URL is not permission to scrape or redistribute.
   assessedOn: CalendarDate;
   limitations: string;
+  license?: { name: string; url: string };
 }
 
 export interface EditorialEvidence {

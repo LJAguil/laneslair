@@ -66,7 +66,9 @@ export function reserveDaily(snapshot: DailySnapshot, now: number): { snapshot: 
     ids.push(source.id);
     return { ...source, attempts: [...source.attempts, at].slice(-4), error: "pending" as const };
   });
-  return { snapshot: { ...snapshot, updatedAt: at, sources }, ids, at };
+  // A no-op is not persisted by prepare. Preserve the exact durable representation
+  // so fetch can verify it and report the cooldown without a false state conflict.
+  return { snapshot: ids.length ? { ...snapshot, updatedAt: at, sources } : snapshot, ids, at };
 }
 export function dailySnapshotItems(snapshot: DailySnapshot): DiscoverItem[] {
   return snapshot.sources.flatMap(source => source.items.map((item): DiscoverItem => {

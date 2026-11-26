@@ -1,16 +1,17 @@
-name: Daily Discover public feeds
+name: Refresh Discover
 on:
   schedule:
     - cron: '17 11 * * *'
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Inspect only (no job) or the approved first data-only pilot'
+        description: 'Refresh saved feeds; first-time setup uses controlled-pilot'
         type: choice
-        default: inspect-only
+        default: refresh-now
         options:
           - inspect-only
           - controlled-pilot
+          - refresh-now
 permissions:
   contents: read
 concurrency:
@@ -24,7 +25,7 @@ jobs:
       github.event.repository.private == false &&
       github.ref == 'refs/heads/main' &&
       ((github.event_name == 'schedule' && vars.DISCOVER_DAILY_ENABLED == 'true') ||
-       (github.event_name == 'workflow_dispatch' && inputs.mode == 'controlled-pilot' && vars.DISCOVER_DAILY_ENABLED != 'true'))
+       (github.event_name == 'workflow_dispatch' && (inputs.mode == 'controlled-pilot' || inputs.mode == 'refresh-now') && vars.DISCOVER_DAILY_ENABLED != 'true'))
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -42,10 +43,12 @@ jobs:
           node-version: '22'
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Persist request reservations
-        run: node scripts/discover/daily-update.mjs prepare
+        shell: bash
+        run: node scripts/discover/daily-update.mjs prepare | tee -a "$GITHUB_STEP_SUMMARY"
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Fetch subscriptions and save public metadata
-        run: node scripts/discover/daily-update.mjs fetch
+        shell: bash
+        run: node scripts/discover/daily-update.mjs fetch | tee -a "$GITHUB_STEP_SUMMARY"
         env:
           GITHUB_TOKEN: ${{ github.token }}

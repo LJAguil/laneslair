@@ -2,11 +2,12 @@ import { curatedCatalog } from "./curated";
 import { candidateNews } from "./candidate-news";
 import { applyRefreshChecks, refreshAdditions } from "./refresh-2026-11-18";
 import { november19Events, november19News } from "./refresh-2026-11-19";
+import { november26Events, november26News } from "./refresh-2026-11-26";
 import type { DealItem, DiscoverItem, EditorialEvidence, EventItem } from "./types";
 
 /** Explicit editorial selection; source checks are independent of build/release time. */
 export const candidateCheckedAt = "2026-11-13T21:53:40Z";
-export const candidateCurationNote = "Selected outings, an offer and news checked November 19, 2026. Other picks retain their own dated checks; feed checks are shown separately.";
+export const candidateCurationNote = "New outings and news checked November 26, 2026. Other picks retain their own dated checks, including food offers; feed checks are shown separately.";
 const zone = "America/Chicago";
 const evidence = (url: string, sourceItemId: string, sourceId = "experience-ruston", level: EditorialEvidence["level"] = "official-listing"): EditorialEvidence => ({
   sourceId, sourceItemId, url, level, verifiedAt: candidateCheckedAt, fetchedAt: null, sourceUpdatedAt: null,
@@ -78,4 +79,5 @@ function refreshed(item: DiscoverItem): DiscoverItem {
 }
 /** Frozen earlier selection for historical evidence tests; new batches keep their own clocks. */
 export const november18Catalog: readonly DiscoverItem[] = [...[...curatedCatalog.map(refreshed), ...additions].map(applyRefreshChecks), ...refreshAdditions];
-export const candidateCatalog: readonly DiscoverItem[] = [...november18Catalog, ...november19Events, ...november19News];
+export const november19Catalog: readonly DiscoverItem[] = [...november18Catalog, ...november19Events, ...november19News];
+export const candidateCatalog: readonly DiscoverItem[] = [...november19Catalog, ...november26Events, ...november26News];

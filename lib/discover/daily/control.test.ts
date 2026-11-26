@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { dailyAuthority, assertPilotStore } from "../../../scripts/discover/daily-authority.mjs";
-import { bootstrapDailySnapshot, decodeDailySnapshot, reserveDaily } from "./snapshot";
+import { dailyAuthority, assertPilotStore, assertManualBaseline } from "../../../scripts/discover/daily-authority.mjs";
+import { bootstrapDailySnapshot, decodeDailySnapshot, emptyDailySnapshot, reserveDaily } from "./snapshot";
 
 const base = {
   GITHUB_ACTIONS: "true", GITHUB_REPOSITORY: "LJAguil/laneslair",
@@ -34,6 +34,32 @@ describe("first data-only pilot authority", () => {
   });
 });
 describe("first ledger carries known capture receipts", () => {
+  it("keeps the durable snapshot byte-identical when a second manual click is rate limited", () => {
+    const now = Date.parse("2026-11-26T12:00:00Z");
+    const first = reserveDaily(bootstrapDailySnapshot(now), now);
+    const saved = JSON.stringify(first.snapshot);
+    const restored = decodeDailySnapshot(saved, now + 60_000);
+    const again = reserveDaily(restored, now + 60_000);
+    expect(again.ids).toEqual([]);
+    expect(JSON.stringify(again.snapshot)).toBe(saved);
+    expect(again.snapshot.updatedAt).toBe(first.snapshot.updatedAt);
+    expect(again.snapshot).toBe(restored);
+  });
+  it("does not turn a source-request backoff into a new storage/check timestamp", () => {
+    const now = Date.parse("2026-11-26T12:00:00Z"), snapshot = emptyDailySnapshot(now);
+    for (const source of snapshot.sources) source.retryAfterAt = "2026-11-28T12:00:00.000Z";
+    const again = reserveDaily(snapshot, now + 86_400_000);
+    expect(again.ids).toEqual([]);
+    expect(again.snapshot).toBe(snapshot);
+    expect(again.snapshot.sources.every(source => source.checkedAt === null && source.attempts.length === 0)).toBe(true);
+  });
+  it("allows repeat manual refresh only after every source has a successful baseline", () => {
+    expect(dailyAuthority({ ...base, DISCOVER_RUN_MODE: "refresh-now" })).toBe("manual");
+    expect(() => dailyAuthority({ ...base, DISCOVER_RUN_MODE: "refresh-now", DISCOVER_DAILY_ENABLED: "true" })).toThrow();
+    expect(() => assertManualBaseline("manual", null)).toThrow();
+    expect(() => assertManualBaseline("manual", { sources: [{ checkedAt: null }] })).toThrow();
+    expect(() => assertManualBaseline("manual", { sources: [{ checkedAt: "2026-11-26T12:00:00.000Z" }] })).not.toThrow();
+  });
   it("does not replace historical requests with fabricated editorial or transport clocks", () => {
     const now = Date.parse("2026-11-26T12:00:00Z"), snapshot = bootstrapDailySnapshot(now);
     expect(decodeDailySnapshot(JSON.stringify(snapshot), now)).toEqual(snapshot);

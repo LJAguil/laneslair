@@ -1,5 +1,11 @@
 # Daily Discover subscriptions — prepared November 19, 2026
 
+**Latest local work, November 26:** [manual refresh and coverage expansion](DISCOVER_MANUAL_REFRESH_2026-11-26.md)
+adds a repeatable `refresh-now` choice (the new default), only after a successful
+first pilot. The published `60443ae` control release still uses the earlier default
+until these new changes are separately released. This supersedes the default-mode
+description below; no schedule, reader or source-acquisition setting was changed.
+
 **November 26 update:** the owner approved a first, data-only controlled pilot.
 See [pilot runbook](DISCOVER_CONTROLLED_PILOT_2026-11-26.md). Its manual control is
 independent of the recurring switch: default dispatch skips the job; explicit

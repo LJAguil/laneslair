@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import ts from "typescript";
 import { readStore, writeStore } from "./daily-store.mjs";
-import { dailyAuthority, assertPilotStore } from "./daily-authority.mjs";
+import { dailyAuthority, assertPilotStore, assertManualBaseline } from "./daily-authority.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url)), output = path.join(root, "build/discover-daily");
 const mode = process.argv[2];
@@ -30,11 +30,12 @@ if (process.argv.length !== 3 || !["prepare", "fetch", "sample", "--help"].inclu
       const stored = await readStore(), now = Date.now();
       assertPilotStore(authority, stored.head);
       const snapshot = stored.text === null ? bootstrapDailySnapshot(now) : decodeDailySnapshot(stored.text, now);
+      assertManualBaseline(authority, stored.text === null ? null : snapshot);
       const reservation = reserveDaily(snapshot, now);
       const head = reservation.ids.length ? await writeStore(JSON.stringify(reservation.snapshot), stored.head) : stored.head;
       // Only written after the pre-request reservation is durable. No API token stored.
       await writeFile(statePath, JSON.stringify({ ...reservation, head }));
-      process.stdout.write(`Reserved ${reservation.ids.length} daily source attempts.\n`);
+      process.stdout.write(`Reserved ${reservation.ids.length} source attempts. Existing data stays available during refresh.\n`);
     } else if (mode === "fetch") {
       const reservation = JSON.parse(await readFile(statePath, "utf8"));
       const stored = await readStore();
@@ -42,9 +43,9 @@ if (process.argv.length !== 3 || !["prepare", "fetch", "sample", "--help"].inclu
       if (reservation.ids.length) {
         const snapshot = await completeDaily({ snapshot: decodeDailySnapshot(stored.text, Date.now()), ids: reservation.ids, at: reservation.at, fetcher: fetch, now: Date.now });
         await writeStore(JSON.stringify(snapshot), reservation.head);
-        for (const source of snapshot.sources) process.stdout.write(`${source.id}: ${source.error ?? "updated"}; ${source.items.length} metadata items\n`);
+        for (const source of snapshot.sources) process.stdout.write(`- ${source.id}: ${source.error ?? "updated"}; ${source.items.length} metadata items; last successful check: ${source.checkedAt ?? "none"}\n`);
         if (snapshot.sources.some(source => source.error !== null)) process.exitCode = 1;
-      } else process.stdout.write("Daily attempt limit reached; no publisher requests.\n");
+      } else process.stdout.write("Already checked today or waiting for a source cooldown; no publisher requests. Previous data retained.\n");
     } else {
       const now = Date.parse("2026-11-20T12:00:00Z"), reservation = reserveDaily(emptyDailySnapshot(now), now);
       const snapshot = await completeDaily({ ...reservation, now: () => now, fetcher: async () => new Response("", { status: 503 }) });
@@ -52,7 +53,16 @@ if (process.argv.length !== 3 || !["prepare", "fetch", "sample", "--help"].inclu
       await writeFile(path.join(output, "sample.json"), JSON.stringify(snapshot, null, 2));
       process.stdout.write("Offline sample passed: failures retain clocks, consume reservations and do not fetch live data.\n");
     }
-  } catch {
+  } catch (error) {
+    const guidance = {
+      "complete-first-pilot-before-manual-refresh": "First-time setup is incomplete. Inspect the controlled pilot before using refresh-now.",
+      "pilot-already-initialized": "The pilot already has saved state. Inspect that run; do not delete its request history or blindly rerun it.",
+      "daily-workflow-disabled": "Use the named GitHub workflow on main. Manual updates require the recurring schedule switch to remain off.",
+    };
+    if (error instanceof Error && Object.hasOwn(guidance, error.message)) {
+      // Safe fixed guidance reaches the workflow summary as well as its logs.
+      process.stdout.write(`${guidance[error.message]}\n`);
+    }
     // Do not print response bodies, request headers, environment values or tokens.
     process.stderr.write("Daily update stopped safely. No unvalidated snapshot was selected.\n"); process.exitCode = 1;
   }

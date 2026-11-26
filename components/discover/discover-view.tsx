@@ -6,6 +6,7 @@ import { EmptyState, PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { curatedCatalog, catalogCheckedAt } from "@/lib/discover/curated";
+import { discoverRefreshUrl, discoverRefreshSteps } from "@/lib/discover/refresh-help";
 import { discoverSources } from "@/lib/discover/sources";
 import { discoverDefaults, type DealItem, type DiscoverItem, type DiscoverSource, type EventItem } from "@/lib/discover/types";
 import { bookmarkKey, catalogEntries, displayInstant, displayWindow, newsFormatLabels, publicationLabel, safeLink, type CatalogEntry } from "@/lib/discover/presentation";
@@ -72,7 +73,8 @@ export function DiscoverScreen({ items, sources, now, initialTab = "event", feed
       actions={<span className="inline-flex items-center gap-1.5 text-sm text-muted"><MapPin className="h-4 w-4" aria-hidden="true" />Ruston & Lincoln Parish</span>} />
     <div className="mb-5 rounded-xl border border-line bg-panel px-4 py-3 text-sm text-muted">
       <p>{curationNote ?? <>Curated source batch checked {displayInstant(catalogCheckedAt)}. Feed checks are labeled separately on stories.</>}</p>
-      <p className="mt-1 text-xs text-subtle">{updates.enabled ? "Selected feeds update daily. Curated picks and food offers still need manual checks." : "Updates are manual."} Older picks move out of current results until rechecked. Monroe is included in nearby coverage as picks become available; trips stay separate.</p>
+      <p className="mt-1 text-xs text-subtle">{updates.enabled ? "Saved feed updates are available. Curated picks and food offers still need manual checks." : "Updates are manual."} Older picks move out of current results until rechecked. Monroe is included in nearby coverage as picks become available; trips stay separate.</p>
+      <details className="mt-3 rounded-xl border border-line px-3"><summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">How to refresh Discover</summary><ol className="list-decimal space-y-2 pl-5 text-sm text-muted">{discoverRefreshSteps.map(step => <li key={step}>{step}</li>)}</ol><Outbound href={discoverRefreshUrl}>Open refresh controls</Outbound><p className="pb-3 text-xs text-subtle">GitHub write access is required. Food offers and curated picks need review. Daily automatic refresh is the next stage.</p></details>
     </div>
     <div role="tablist" aria-label="Discover sections" className="mb-5 grid grid-cols-3 gap-1 rounded-xl border border-line bg-panel p-1">
       {tabs.map((option, index) => <button key={option.id} type="button" role="tab" id={`${id}-tab-${option.id}`} aria-controls={`${id}-panel`} aria-selected={tab === option.id} tabIndex={tab === option.id ? 0 : -1}
@@ -123,8 +125,8 @@ function FeedNotice({ feed, now }: { feed: FeedAvailability; now: number | null 
 
 function DailyNotice({ updates, kind, now }: { updates: DailyUpdateStatus; kind: "news" | "event"; now: number | null }) {
   return <div role="status" className="rounded-xl border border-line bg-panel p-3 text-sm text-muted">
-    <p>Daily feed updates · source metadata, not editorial verification</p>
-    {!updates.available ? <p className="mt-1">Automatic updates are unavailable. Saved curated picks retain their own check dates.</p> : updates.sources.filter(source => source.kind === kind).map(source => <p key={source.name} className="mt-1 text-xs">
+    <p>Saved feed updates · source metadata, not editorial verification</p>
+    {!updates.available ? <p className="mt-1">Feed updates are unavailable. Saved curated picks retain their own check dates.</p> : updates.sources.filter(source => source.kind === kind).map(source => <p key={source.name} className="mt-1 text-xs">
       {source.name}: {source.checkedAt ? <>feed checked {displayInstant(source.checkedAt)}{now !== null && now - Date.parse(source.checkedAt) >= DAILY_FRESHNESS_MS ? " · stale" : ""}</> : "no successful update yet"}{source.failed ? " · latest attempt failed or unfinished; previous data retained" : ""}
     </p>)}
   </div>;
@@ -169,6 +171,7 @@ export function DiscoverItemCard({ entry, source, saved, onSave }: { entry: Cata
     </>}
     {item.kind === "news" && <>
       <p className="mt-2 text-xs text-subtle">{source.name}{item.author ? ` · ${item.author}` : ""}</p>
+      {source.license && <p className="text-xs text-subtle">Source material: <Outbound href={source.license.url}>{source.license.name}</Outbound>. {item.summary.kind === "original" ? "Summary written for Discover." : "Headline metadata only."}</p>}
       <p className="mt-1 text-xs text-subtle">Published {publicationLabel(item)}</p>
       <p className="mt-2 text-xs text-accent-strong">Topics: {item.topics.map(topic => topicLabels[topic] ?? topic).join(" · ")}</p>
       <p className="mt-3 text-sm leading-relaxed text-muted">{item.summary.kind === "original" ? item.summary.text : `Summary unavailable: ${item.summary.reason}`}</p>
