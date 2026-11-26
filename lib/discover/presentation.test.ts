@@ -43,7 +43,7 @@ describe("Discover public-content view (static rendering, not device acceptance)
   it("keeps national offers outside confirmed nearby deals", () => {
     const deal = dealFixture();
     const html = renderToStaticMarkup(createElement(DiscoverScreen, { items: [deal], sources: fixtureSources, now: NOW, initialTab: "deal" }));
-    expect(html).toContain("No confirmed nearby deals right now");
+    expect(html).toContain("0 confirmed nearby deals · 1 national offer to check locally");
     expect(html).toContain("National offers · check local participation");
     expect(html).toContain("nearby participation unknown");
     expect(html).toContain("App required");

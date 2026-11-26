@@ -94,12 +94,23 @@ export interface NewsItem extends BaseItem<Evidence> {
   summary: { kind: "original"; text: string; writtenAt: Instant } | { kind: "unavailable"; reason: string };
   format: "reporting" | "opinion" | "analysis" | "institutional-update" | "unclassified";
   access: "open" | "paywall" | "unknown";
+  /** Explicitly curated work titles, never extracted from a headline at save time. */
+  entertainment?: readonly DiscoverTitle[];
+}
+
+export interface DiscoverTitle {
+  title: string;
+  media: "game" | "movie" | "show";
+  anime?: boolean;
+  platform: string;
+  release: string; // Source-reported window/status; no ownership or subscription inferred.
 }
 
 export interface DealItem extends BaseItem {
   kind: "deal";
   restaurant: string;
   window: Window | null; // Unknown dates cannot enter active results.
+  windowBasis?: "observed-active"; // Start is first observation, not an invented promotion launch.
   participation:
     | { kind: "confirmed-nearby"; locations: string[]; checkedAt: Instant }
     | { kind: "national-local-unknown" };
@@ -124,7 +135,7 @@ export const discoverDefaults = {
   travel: "nearby-first-trips-separate",
   preferredMaxPriceUSD: 20,
   includeOccasionalHigherPrices: true,
-  newsTopics: ["louisiana", "technology", "science", "national", "world", "discovery"],
+  newsTopics: ["louisiana", "technology", "science", "national", "world", "discovery", "games", "movies", "tv", "anime"],
   restaurants: "fast-food-and-chains",
   appOffers: true,
 } as const;

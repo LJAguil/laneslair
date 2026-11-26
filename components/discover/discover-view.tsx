@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
+import { lazy, Suspense, useId, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
 import { Bookmark, BookmarkCheck, ExternalLink, MapPin } from "lucide-react";
 import { EmptyState, PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { curatedCatalog, catalogCheckedAt } from "@/lib/discover/curated";
 import { discoverRefreshUrl, discoverRefreshSteps } from "@/lib/discover/refresh-help";
 import { discoverSources } from "@/lib/discover/sources";
-import { discoverDefaults, type DealItem, type DiscoverItem, type DiscoverSource, type EventItem } from "@/lib/discover/types";
+import { discoverDefaults, type DealItem, type DiscoverItem, type DiscoverSource, type DiscoverTitle, type EventItem } from "@/lib/discover/types";
 import { bookmarkKey, catalogEntries, displayInstant, displayWindow, newsFormatLabels, publicationLabel, safeLink, type CatalogEntry } from "@/lib/discover/presentation";
 import { discoverClockSnapshot, discoverServerClockSnapshot, subscribeDiscoverClock } from "@/lib/discover/clock";
 import { unavailableFeed, type FeedAvailability } from "@/lib/discover/feed-availability";
@@ -19,17 +19,20 @@ import { DAILY_FRESHNESS_MS } from "@/lib/discover/daily/policy";
 
 type Tab = DiscoverItem["kind"];
 const tabs: { id: Tab; label: string }[] = [{ id: "event", label: "Things to do" }, { id: "news", label: "News" }, { id: "deal", label: "Food deals" }];
-const topicLabels: Record<string, string> = { louisiana: "Louisiana / local", technology: "Technology", science: "Science", national: "National", world: "World", discovery: "Discovery mix" };
+const topicLabels: Record<string, string> = { louisiana: "Louisiana / local", technology: "Technology", science: "Science", national: "National", world: "World", discovery: "Discovery mix", games: "Video games", movies: "Movies", tv: "TV shows", anime: "Anime" };
 const actionClass = "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line px-3 py-2 text-sm text-muted hover:border-line-strong hover:text-fg";
+// Public preview/screens never load the account-owned import controller.
+const DiscoverEntertainmentBridge = lazy(() => import("./entertainment-bridge").then(module => ({ default: module.DiscoverEntertainmentBridge })));
 
-export function DiscoverView({ items = curatedCatalog, feed = unavailableFeed, updates = dailyUpdatesOff, curationNote }: { items?: readonly DiscoverItem[]; feed?: FeedAvailability; updates?: DailyUpdateStatus; curationNote?: string }) {
+export function DiscoverView({ items = curatedCatalog, feed = unavailableFeed, updates = dailyUpdatesOff, curationNote, userId }: { items?: readonly DiscoverItem[]; feed?: FeedAvailability; updates?: DailyUpdateStatus; curationNote?: string; userId?: string }) {
   const now = useSyncExternalStore(subscribeDiscoverClock, discoverClockSnapshot, discoverServerClockSnapshot);
-  return <DiscoverScreen items={items} sources={discoverSources} feed={feed} updates={updates} now={now} curationNote={curationNote} />;
+  const screen = (onAdd?: (title: DiscoverTitle, url: string) => void) => <DiscoverScreen items={items} sources={discoverSources} feed={feed} updates={updates} now={now} curationNote={curationNote} onAdd={onAdd} />;
+  return userId ? <Suspense fallback={<p role="status">Opening Discover…</p>}><DiscoverEntertainmentBridge key={userId} userId={userId}>{add => screen(add)}</DiscoverEntertainmentBridge></Suspense> : screen();
 }
 
 /** Public-content-only surface; no global store, auth, personal records or fetches. */
-export function DiscoverScreen({ items, sources, now, initialTab = "event", feed = unavailableFeed, updates = dailyUpdatesOff, curationNote }: {
-  items: readonly DiscoverItem[]; sources: readonly DiscoverSource[]; now: number | null; initialTab?: Tab; feed?: FeedAvailability; updates?: DailyUpdateStatus; curationNote?: string;
+export function DiscoverScreen({ items, sources, now, initialTab = "event", feed = unavailableFeed, updates = dailyUpdatesOff, curationNote, onAdd }: {
+  items: readonly DiscoverItem[]; sources: readonly DiscoverSource[]; now: number | null; initialTab?: Tab; feed?: FeedAvailability; updates?: DailyUpdateStatus; curationNote?: string; onAdd?: (title: DiscoverTitle, url: string) => void;
 }) {
   const id = useId();
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -40,13 +43,15 @@ export function DiscoverScreen({ items, sources, now, initialTab = "event", feed
   const [saved, setSaved] = useState<string[]>([]);
   const [savedOnly, setSavedOnly] = useState(false);
   const [newsLimit, setNewsLimit] = useState(4);
+  const [newsFocus, setNewsFocus] = useState("all");
+  const [dealApp, setDealApp] = useState("all");
   const entries = now === null ? [] : catalogEntries(items, sources, now);
   const toggleSaved = (itemId: string) => setSaved(previous => previous.includes(itemId) ? previous.filter(value => value !== itemId) : [...previous, itemId]);
   const matches = (item: DiscoverItem) => {
     if (item.kind !== tab || (savedOnly && !saved.includes(bookmarkKey(item)))) return false;
     if (item.kind === "event") return item.travel === travel && (now === null || matchesEventDate(item.window, now, eventDate)) && (budget === "all" || item.price.kind === "free" || (budget === "budget" && item.price.kind === "known" && item.price.amount <= 20));
-    if (item.kind === "news") return item.topics.some(topic => topics.includes(topic));
-    return true;
+    if (item.kind === "news") return item.topics.some(topic => topics.includes(topic)) && (newsFocus === "all" || item.topics.includes(newsFocus));
+    return dealApp === "all" || (dealApp === "app" ? item.requirements.app : !item.requirements.app);
   };
   const filtered = entries.filter(entry => matches(entry.item));
   const main = filtered.filter(entry => entry.assessment.placement === "main");
@@ -60,7 +65,7 @@ export function DiscoverScreen({ items, sources, now, initialTab = "event", feed
   const archivedSaved = filtered.filter(entry => entry.assessment.placement === "archive" && saved.includes(bookmarkKey(entry.item)));
   const visible = tab === "news" ? main.slice(0, newsLimit) : main;
   const sourceFor = (item: DiscoverItem) => sources.find(source => source.id === item.evidence.sourceId)!;
-  const cards = (list: CatalogEntry[]) => list.map(entry => <DiscoverItemCard key={bookmarkKey(entry.item)} entry={entry} source={sourceFor(entry.item)} saved={saved.includes(bookmarkKey(entry.item))} onSave={() => toggleSaved(bookmarkKey(entry.item))} />);
+  const cards = (list: CatalogEntry[]) => list.map(entry => <DiscoverItemCard key={bookmarkKey(entry.item)} entry={entry} source={sourceFor(entry.item)} saved={saved.includes(bookmarkKey(entry.item))} onSave={() => toggleSaved(bookmarkKey(entry.item))} onAdd={onAdd} />);
   const onTabKey = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : event.key === "ArrowRight" ? (index + 1) % tabs.length : event.key === "ArrowLeft" ? (index + tabs.length - 1) % tabs.length : null;
     if (next === null) return;
@@ -83,6 +88,7 @@ export function DiscoverScreen({ items, sources, now, initialTab = "event", feed
     </div>
     <section role="tabpanel" id={`${id}-panel`} aria-labelledby={`${id}-tab-${tab}`} tabIndex={0} aria-busy={now === null} className="space-y-5">
       <div className="flex flex-wrap items-center gap-2">
+        {tab === "deal" && <label className="text-sm text-muted">Redeem <select value={dealApp} onChange={event => setDealApp(event.target.value)} className="ml-1 min-h-11 rounded-lg border border-line bg-panel px-2 text-fg"><option value="all">All offers</option><option value="app">App offers</option><option value="no-app">No app needed</option></select></label>}
         {tab === "event" && <>
           <div role="group" aria-label="Travel range" className="flex flex-wrap gap-2">{(["nearby", "trip"] as const).map(value => <button key={value} type="button" aria-pressed={travel === value} onClick={() => setTravel(value)} className={cn(actionClass, travel === value && "border-accent/40 bg-accent-soft text-fg")}>{value === "nearby" ? "Nearby" : "Weekend trips"}</button>)}</div>
           <label className="text-sm text-muted">Price <select value={budget} onChange={event => setBudget(event.target.value)} className="ml-1 min-h-11 max-w-full rounded-lg border border-line bg-panel px-2 text-fg"><option value="all">All prices</option><option value="budget">Free / $20 or less</option><option value="free">Free</option></select></label>
@@ -92,6 +98,7 @@ export function DiscoverScreen({ items, sources, now, initialTab = "event", feed
       </div>
       {updates.enabled && tab !== "deal" && <DailyNotice updates={updates} kind={tab} now={now} />}
       {tab === "news" && !updates.enabled && <FeedNotice feed={feed} now={now} />}
+      {tab === "news" && <div role="group" aria-label="News category" className="flex flex-wrap gap-2">{Object.entries({ all: "All news", games: "Games", movies: "Movies", tv: "TV", anime: "Anime" }).map(([value, label]) => <button type="button" key={value} aria-pressed={newsFocus === value} className={cn(actionClass, newsFocus === value && "border-accent/40 bg-accent-soft text-fg")} onClick={() => { setNewsFocus(value); setNewsLimit(4); if (value !== "all") setTopics(previous => previous.includes(value) ? previous : [...previous, value]); }}>{label}</button>)}</div>}
       {tab === "news" && <details className="rounded-xl border border-line bg-panel p-3">
         <summary className="min-h-11 cursor-pointer py-2 text-sm font-medium">News interests · {topics.length} selected</summary>
         <fieldset className="mt-2"><legend className="text-xs text-subtle">Choose what to include. Changes last for this visit; nothing is inferred from your other app activity.</legend>
@@ -100,8 +107,8 @@ export function DiscoverScreen({ items, sources, now, initialTab = "event", feed
       </details>}
       <p className="text-xs text-subtle">{tab === "event" ? "Mostly free or under $20, with a few higher-cost options. Unknown prices stay labeled; check admission before going." : tab === "news" ? "A small starting mix, not comprehensive coverage. Original summaries link you to the publisher’s full story." : "A national promotion does not confirm Ruston participation. Check the selected restaurant and all offer terms before ordering."} Bookmarks last until you leave or reload this page.</p>
       {now === null ? <p role="status" className="py-8 text-center text-sm text-muted">Checking dates and freshness…</p> : <>
-        <p role="status" className="text-sm text-muted">{main.length} current {tab === "news" ? main.length === 1 ? "story" : "stories" : main.length === 1 ? "pick" : "picks"} match your filters.{tab === "event" && eventDate !== "all" ? " Dates follow each event’s local time zone." : ""}</p>
-        {visible.length ? <div className="space-y-4">{cards(visible)}</div> : <EmptyState title={savedOnly ? "No saved picks in this view" : tab === "deal" ? "No confirmed nearby deals right now" : tab === "news" ? "No current stories for these interests" : travel === "trip" ? "No checked weekend trips yet" : "No current outings in this view"} description="Try another filter or browse the sources below. Picks needing a fresh check are kept separate." />}
+        <p role="status" className="text-sm text-muted">{tab === "deal" ? `${main.length} confirmed nearby ${main.length === 1 ? "deal" : "deals"} · ${national.length} national ${national.length === 1 ? "offer" : "offers"} to check locally.` : <>{main.length} current {tab === "news" ? main.length === 1 ? "story" : "stories" : main.length === 1 ? "pick" : "picks"} match your filters.{tab === "event" && eventDate !== "all" ? " Dates follow each event’s local time zone." : ""}</>}</p>
+        {visible.length ? <div className="space-y-4">{cards(visible)}</div> : tab === "deal" && national.length > 0 ? null : <EmptyState title={savedOnly ? "No saved picks in this view" : tab === "deal" ? "No confirmed nearby deals right now" : tab === "news" ? "No current stories for these interests" : travel === "trip" ? "No checked weekend trips yet" : "No current outings in this view"} description="Try another filter or browse the sources below. Picks needing a fresh check are kept separate." />}
         {tab === "news" && main.length > newsLimit && <button type="button" className={cn(actionClass, "w-full")} onClick={() => setNewsLimit(value => value + 4)}>Load more stories</button>}
         {national.length > 0 && <section aria-label="National offers"><h2 className="mb-2 text-base font-semibold">National offers · check local participation</h2><p className="mb-3 text-sm text-muted">Public terms have been checked; availability at a nearby restaurant is still unknown.</p><div className="space-y-4">{cards(national)}</div></section>}
         {review.length > 0 && <details className="rounded-xl border border-line p-4"><summary className="min-h-11 cursor-pointer py-2 text-sm font-medium">Needs a check · {review.length} {review.length === 1 ? "pick" : "picks"}</summary><p className="mb-4 text-xs text-subtle">These are outside current recommendations. Dates, terms, source changes or freshness still need confirmation.</p><div className="space-y-4">{cards(review)}</div></details>}
@@ -143,7 +150,8 @@ function eventPrice(item: EventItem): string {
 
 function DealRequirements({ item }: { item: DealItem }) {
   return <div className="mt-3 space-y-2 text-sm text-muted">
-    <p className="font-medium text-fg">{item.window ? displayWindow(item.window) : "Valid dates not confirmed"}</p>
+    <p className="font-medium text-fg">{item.windowBasis === "observed-active" ? "Observed availability: " : ""}{item.window ? displayWindow(item.window) : "Valid dates not confirmed"}</p>
+    {item.windowBasis === "observed-active" && <p className="text-xs text-subtle">The first date is when this offer was checked active. Its original start date was not published; the end date is from the restaurant.</p>}
     <p>{item.participation.kind === "confirmed-nearby" ? `Nearby participation checked: ${item.participation.locations.join("; ")}` : "National promotion · nearby participation unknown"}</p>
     <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-xs"><dt>Purchase</dt><dd>{item.requirements.purchase}</dd><dt>App / account</dt><dd>{item.requirements.app ? "App required" : "App not required"} · {item.requirements.account ? "Account required" : "Account not required"}</dd><dt>Coupon</dt><dd>{item.requirements.coupon ?? "No code recorded; check full terms"}</dd><dt>Redeem via</dt><dd>{item.requirements.channels.join(", ")}</dd></dl>
     <ul className="list-disc space-y-1 pl-4 text-xs">{item.requirements.exclusions.map(exclusion => <li key={exclusion}>{exclusion}</li>)}</ul>
@@ -151,7 +159,7 @@ function DealRequirements({ item }: { item: DealItem }) {
   </div>;
 }
 
-export function DiscoverItemCard({ entry, source, saved, onSave }: { entry: CatalogEntry; source: DiscoverSource; saved: boolean; onSave: () => void }) {
+export function DiscoverItemCard({ entry, source, saved, onSave, onAdd }: { entry: CatalogEntry; source: DiscoverSource; saved: boolean; onSave: () => void; onAdd?: (title: DiscoverTitle, url: string) => void }) {
   const { item, assessment } = entry;
   const SaveIcon = saved ? BookmarkCheck : Bookmark;
   const stateLabel = { active: item.kind === "deal" || (item.kind === "event" && item.window.kind === "dates") ? "Within listed dates" : "Happening now", upcoming: "Upcoming", current: "Current", stale: "Stale · recheck needed", "needs-confirmation": "Needs confirmation", canceled: "Canceled", postponed: "Postponed", withdrawn: "Withdrawn", expired: "Past its listing window", invalid: "Unavailable" }[assessment.state];
@@ -188,5 +196,17 @@ export function DiscoverItemCard({ entry, source, saved, onSave }: { entry: Cata
       <Outbound href={item.evidence.url}>{item.kind === "news" ? "Read article" : item.kind === "deal" ? "Check official offer" : "Event details"}</Outbound>
       {item.kind === "event" && item.registrationUrl && <div><Outbound href={item.registrationUrl}>Registration / tickets</Outbound></div>}
     </div>
+    {item.kind === "news" && item.entertainment?.length ? <TitlesInStory titles={item.entertainment} url={item.evidence.url} current={assessment.placement === "main"} onAdd={onAdd} /> : null}
   </article>;
+}
+
+function TitlesInStory({ titles, url, current, onAdd }: { titles: readonly DiscoverTitle[]; url: string; current: boolean; onAdd?: (title: DiscoverTitle, url: string) => void }) {
+  const list = <div className="space-y-3" aria-label="Titles in this story">{titles.map(title => <div key={`${title.media}:${title.title}`} className="rounded-xl bg-raised p-3">
+    <p className="text-sm font-semibold">{title.title}</p>
+    <p className="mt-1 text-xs text-muted">{title.anime ? "Anime · " : ""}{title.media === "game" ? "Game" : title.media === "movie" ? "Movie" : "Show"}{title.platform ? ` · ${title.platform}` : ""}</p>
+    <p className="mt-1 text-xs text-subtle">{title.release}</p>
+    <button type="button" aria-label={`Add ${title.title} to Entertainment`} className={cn(actionClass, "mt-2 w-full text-accent-strong")} disabled={!onAdd || !current} onClick={() => onAdd?.(title, url)}>Add to Entertainment</button>
+    {!current && <p className="mt-1 text-xs text-subtle">Check this story’s details before adding a title.</p>}
+  </div>)}</div>;
+  return titles.length > 1 ? <details className="mt-4 border-t border-line pt-2"><summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">{titles.length} titles · add to Entertainment</summary>{list}</details> : <div className="mt-4 border-t border-line pt-3">{list}</div>;
 }

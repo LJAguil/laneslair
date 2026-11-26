@@ -94,8 +94,15 @@ export function catalogErrors(item: DiscoverItem, sources: readonly DiscoverSour
       if (!item.summary.text.trim()) errors.push("Original summary cannot be empty");
       checkedTime(item.summary.writtenAt, "summary time");
     } else if (!item.summary.reason.trim()) errors.push("Summary unavailability needs explanation");
+    if (item.entertainment !== undefined) {
+      if (!Array.isArray(item.entertainment) || !item.entertainment.length || item.entertainment.length > 6 || item.evidence.level === "publisher-feed" || item.evidence.level === "subscription-feed") errors.push("Unsupported Entertainment suggestions");
+      else for (const title of item.entertainment) {
+        if (!title || typeof title.title !== "string" || !title.title.trim() || title.title.length > 200 || /[<>\u0000-\u001f]/.test(title.title) || !["game", "movie", "show"].includes(title.media) || typeof title.platform !== "string" || title.platform.length > 120 || /[<>\u0000-\u001f]/.test(title.platform) || typeof title.release !== "string" || !title.release.trim() || title.release.length > 180 || /[<>\u0000-\u001f]/.test(title.release) || title.anime !== undefined && typeof title.anime !== "boolean") errors.push("Invalid Entertainment title metadata");
+      }
+    }
   }
   if (item.kind === "deal") {
+    if (item.windowBasis !== undefined && (item.windowBasis !== "observed-active" || item.window?.kind !== "dates")) errors.push("Invalid observed offer window");
     if (!item.restaurant.trim()) errors.push("Restaurant required");
     checkedTime(item.requirements.reviewedAt, "requirements review time");
     if (!item.requirements.purchase.trim() || !item.requirements.channels.length) errors.push("Purchase and redemption channel required");
