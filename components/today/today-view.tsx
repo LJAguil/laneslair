@@ -18,8 +18,13 @@ import { relevantTasks } from "@/lib/today";
 import { UpcomingReminders } from "./upcoming-reminders";
 import { FeaturedPuzzleCard as PuzzleCard } from "@/components/play/featured-puzzle-card";
 import { captureIsUnsorted } from "@/lib/journal";
+import { DailyPlanning } from "./daily-planning";
+import { EveningWrap } from "./evening-wrap";
+import { TodayCustomization, TodayShortcuts } from "./today-customization";
+import { useDailyPreferences } from "./daily-preferences-provider";
 
 export function TodayView() {
+  const { value: preferences } = useDailyPreferences();
   const { today, now, tasks, tasksStatus, habits, habitsStatus, inboxNotes, inboxStatus, focus,journalSources,journalIndexStatus } = useAppState();
   const { openNewTask } = useShell();
   const focusId = focus?.date === today ? focus.taskId : undefined;
@@ -45,27 +50,31 @@ export function TodayView() {
         <Link href="/play/detective" className="inline-flex items-center gap-1.5 rounded text-accent-strong hover:underline"><SearchCheck className="h-3.5 w-3.5" aria-hidden="true" />Today’s case</Link>
         <Link href="/play/echoes" className="rounded text-accent-strong hover:underline">Echoes</Link>
       </nav>
-      <Card>
+      <TodayShortcuts />
+      {!preferences.hidden.includes("capture") && <Card>
         <CardHeader title="Quick capture" description="Ideas don’t need a plan yet." icon={<Inbox className="h-5 w-5" aria-hidden="true" />}
           action={<Link href="/inbox" className="text-sm text-accent-strong hover:underline">Inbox</Link>} />
         <CaptureForm compact />
-      </Card>
+      </Card>}
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
       <div className="min-w-0 space-y-5">
       <FocusCard />
-      <HabitsCard limit={3} />
+      <DailyPlanning />
+      {!preferences.hidden.includes("habits") && <HabitsCard limit={3} />}
+      {!preferences.hidden.includes("wrap") && <EveningWrap />}
       </div>
       <div className="min-w-0 space-y-5">
-      <UpcomingReminders />
-      <Card>
+      {!preferences.hidden.includes("reminders") && <UpcomingReminders />}
+      {!preferences.hidden.includes("radar") && <Card>
         <CardHeader title="On your radar" description="Overdue work, the next 7 days, and important undated tasks."
           icon={<ListChecks className="h-5 w-5" />} />
         <TaskList tasks={upcoming} compact emptyTitle="A little breathing room" emptyDescription="Nothing else urgent or due soon. You can choose any task as your focus." />
         <Link href="/tasks" className={buttonClasses("ghost", "sm", "mt-4 min-h-11")}>All tasks<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
-      </Card>
-      <PuzzleCard />
+      </Card>}
+      {!preferences.hidden.includes("play") && <PuzzleCard />}
       </div>
       </div>
+      <TodayCustomization />
       <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-muted">
         <Link href="/projects" className="hover:text-fg hover:underline">Your projects</Link>
         <Link href="/overview" className="hover:text-fg hover:underline">Activity & overview</Link>

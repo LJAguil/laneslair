@@ -64,6 +64,15 @@ describe("persistent habits SQL", () => {
     expect((await record(check,0,randomUUID(),"set")).amount).toBe(0);
     await expect(record(check,2)).rejects.toThrow(/complete or undo/);
   });
+  it("permits an owned guarded undo without overwriting a later total or another account",async()=>{
+    const id=await create(),op=randomUUID();await record(id,2,op);
+    const undo=await db.query("update public.habit_logs set amount=amount-1 where user_id=$1 and habit_id=$2 and completed_on=$3 and amount=2 and target=8 returning amount",[USER,id,today]);
+    expect(undo.rows).toHaveLength(1);expect((await record(id,2,op)).amount).toBe(1);
+    await record(id,3);
+    expect((await db.query("update public.habit_logs set amount=0 where user_id=$1 and habit_id=$2 and completed_on=$3 and amount=1 returning amount",[USER,id,today])).rows).toHaveLength(0);
+    await asUser(OTHER);
+    expect((await db.query("update public.habit_logs set amount=0 where habit_id=$1 returning amount",[id])).rows).toHaveLength(0);
+  });
   it("keeps existing daily goals fixed when a habit's target changes",async () => {
     const id=await create(); expect((await record(id,2)).target).toBe(8);
     await db.query("update public.habits set daily_target=10,streak_enabled=false where id=$1",[id]);

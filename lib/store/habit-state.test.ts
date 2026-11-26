@@ -1,13 +1,23 @@
 import { beforeEach,expect,it,vi } from "vitest";
 import { TaskDataError } from "@/lib/data/tasks";
 import type { Habit } from "@/lib/types";
-vi.mock("@/lib/data/habits",async(original) => ({...await original<typeof import("@/lib/data/habits")>(),fetchHabits:vi.fn(),createHabit:vi.fn(),updateHabit:vi.fn(),setHabitActive:vi.fn(),recordHabitProgress:vi.fn()}));
+vi.mock("@/lib/data/habits",async(original) => ({...await original<typeof import("@/lib/data/habits")>(),fetchHabits:vi.fn(),createHabit:vi.fn(),updateHabit:vi.fn(),setHabitActive:vi.fn(),recordHabitProgress:vi.fn(),undoHabitAddition:vi.fn()}));
 vi.mock("@/lib/data/tasks",async(original) => ({...await original<typeof import("@/lib/data/tasks")>(),getVerifiedUserId:vi.fn(async() => "owner")}));
 import * as data from "@/lib/data/habits";
 import { createHabitActions,initialHabitState,reduceHabits,type HabitAction } from "./habit-state";
 const h:Habit={id:"habit",name:"Water",description:"",frequency:"daily",targetPerWeek:7,trackingType:"quantity",dailyTarget:8,unit:"glasses",streakEnabled:true,isActive:true,color:"cyan",createdAt:"2026-01-01T12:00:00Z",days:{},checkIns:[]};
 const request={id:"operation",habitId:h.id,date:"2026-11-07",mode:"add" as const,value:1};
 beforeEach(() => vi.clearAllMocks());
+it("offers undo for a confirmed positive amount and blocks it after a later update",async()=>{
+  const dispatch=vi.fn(),notify=vi.fn(),actions=createHabitActions(dispatch,notify);
+  vi.mocked(data.recordHabitProgress).mockResolvedValueOnce({habit_id:h.id,completed_on:request.date,amount:2,target:8});
+  vi.mocked(data.undoHabitAddition).mockResolvedValueOnce({habit_id:h.id,completed_on:request.date,amount:1,target:8});
+  await actions.recordHabit(h,request);await notify.mock.calls[0][2].run();
+  expect(data.undoHabitAddition).toHaveBeenCalledWith("owner",expect.objectContaining({amount:2}),1);
+  notify.mockClear();vi.mocked(data.recordHabitProgress).mockResolvedValue({habit_id:h.id,completed_on:request.date,amount:3,target:8});
+  await actions.recordHabit(h,{...request,id:"new"});const undo=notify.mock.calls[0][2];
+  await actions.recordHabit(h,{...request,id:"newer"});await expect(undo.run()).rejects.toThrow(/changed/);
+});
 it("retains a failed request in shared state, rejects a new action, and retries the same receipt safely",async() => {
   let state={...initialHabitState,habits:[h]};
   const dispatch=(a:HabitAction) => {state=reduceHabits(state,a);};

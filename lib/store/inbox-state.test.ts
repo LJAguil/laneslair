@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { InboxNote } from "@/lib/types";
 import { TaskDataError } from "@/lib/data/tasks";
 
-vi.mock("@/lib/data/inbox", () => ({ fetchNotes: vi.fn(), createNote: vi.fn(), updateNote: vi.fn(), convertNote: vi.fn(), fetchFocus: vi.fn(), saveFocus: vi.fn() }));
+vi.mock("@/lib/data/inbox", () => ({ fetchNotes: vi.fn(), createNote: vi.fn(), updateNote: vi.fn(), undoCaptureArchive: vi.fn(), convertNote: vi.fn(), fetchFocus: vi.fn(), saveFocus: vi.fn() }));
 vi.mock("@/lib/data/tasks", async (original) => ({ ...await original<typeof import("@/lib/data/tasks")>(), getVerifiedUserId: vi.fn(async () => "user") }));
 import * as data from "@/lib/data/inbox";
 import { createInboxActions, initialInboxState, reduceInbox, type InboxAction } from "./inbox-state";
@@ -11,6 +11,15 @@ const note: InboxNote = { id: "capture", body: "Original", createdAt: "2026-11-0
 beforeEach(() => { vi.clearAllMocks(); });
 
 describe("Inbox store reliability", () => {
+  it("offers archive undo only after confirmation and rejects it after later edits",async()=>{
+    const dispatch=vi.fn(),notify=vi.fn(),actions=createInboxActions(dispatch,notify);
+    const archived={...note,archivedAt:note.updatedAt};vi.mocked(data.updateNote).mockResolvedValue(archived);vi.mocked(data.undoCaptureArchive).mockResolvedValue(note);
+    await actions.archiveCapture(note,true);await notify.mock.calls[0][2].run();
+    expect(data.undoCaptureArchive).toHaveBeenCalledWith("user",archived);
+    notify.mockClear();await actions.archiveCapture(note,true);const undo=notify.mock.calls[0][2];
+    vi.mocked(data.updateNote).mockResolvedValue({...archived,body:"Invented edit"});await actions.editCapture(note.id,"Invented edit");
+    await expect(undo.run()).rejects.toThrow(/changed/);
+  });
   it("refuses a draft bound to a different verified account before writing", async () => {
     const actions = createInboxActions(vi.fn(), vi.fn());
     await expect(actions.addCapture("capture", "Invented text", { accountId: "other-user", current: () => true })).rejects.toThrow(/account changed/);

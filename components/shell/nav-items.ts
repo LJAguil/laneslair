@@ -16,6 +16,7 @@ export const navItems: NavItem[] = [
   { href: "/journal", label: "Journal", shortLabel: "Journal", icon: BookOpen },
   { href: "/overview", label: "Overview", shortLabel: "Overview", icon: BarChart3 },
   { href: "/statistics", label: "Statistics", shortLabel: "Stats", icon: ChartNoAxesCombined },
+  { href: "/review", label: "Weekly review", shortLabel: "Review", icon: ListChecks },
   { href: "/habits", label: "Habits & Goals", shortLabel: "Habits", icon: Target },
   { href: "/play", label: "Daily Play", shortLabel: "Play", icon: KeyRound },
   { href: "/discover", label: "Discover", shortLabel: "Discover", icon: Compass },

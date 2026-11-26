@@ -2,6 +2,7 @@ import * as data from "@/lib/data/habits";
 import { getVerifiedUserId, TaskDataError } from "@/lib/data/tasks";
 import { withHabitDay } from "@/lib/habits";
 import type { Habit } from "@/lib/types";
+import { undoAction, type Notify } from "@/lib/undo";
 
 export interface HabitSlice {
   habits: Habit[];
@@ -35,7 +36,7 @@ export function reduceHabits(state: HabitSlice, action: HabitAction): HabitSlice
   }
 }
 
-export function createHabitActions(dispatch: (action: HabitAction) => void, notify: (kind: "success" | "error", message: string) => void) {
+export function createHabitActions(dispatch: (action: HabitAction) => void, notify: Notify) {
   const inFlight = new Set<string>();
   const latest = new Map<string,Habit>();
   const writes = new Map<string,number>();
@@ -92,10 +93,20 @@ export function createHabitActions(dispatch: (action: HabitAction) => void, noti
       if (unconfirmed.has(habit.id) && unconfirmed.get(habit.id)!.id !== request.id) throw new TaskDataError("Retry the pending progress update before adding another.");
       return withHabit(habit.id, async () => {
         try {
-          await getVerifiedUserId();
+          const owner = await getVerifiedUserId();
           const log = await data.recordHabitProgress(request);
-          save(withHabitDay(latest.get(habit.id) ?? habit,log.completed_on,{ amount: Number(log.amount), target: Number(log.target) }));
+          const saved = withHabitDay(latest.get(habit.id) ?? habit,log.completed_on,{ amount: Number(log.amount), target: Number(log.target) });
+          save(saved);
           unconfirmed.delete(habit.id); dispatch({ type: "habits/log-confirmed", id: habit.id });
+          const undoAmount = request.mode === "add" && request.value > 0 ? request.value : habit.trackingType === "check" && request.mode === "set" && request.value === 1 ? 1 : 0;
+          if (undoAmount > 0 && Number(log.amount) >= undoAmount) notify("success", habit.trackingType === "check" ? "Habit checked in" : "Habit amount saved", undoAction(async () => {
+            if (latest.get(habit.id) !== saved || unconfirmed.has(habit.id)) throw new TaskDataError("This habit changed. Reload habits before undoing.");
+            await withHabit(habit.id, async () => {
+              if (await getVerifiedUserId() !== owner) throw new TaskDataError("Sign in to the original account before undoing.");
+              const restored = await data.undoHabitAddition(owner, log, undoAmount);
+              save(withHabitDay(saved, restored.completed_on, { amount: Number(restored.amount), target: Number(restored.target) }));
+            });
+          }));
         } catch (err) {
           const uncertain = !data.progressWasRejected(err);
           if (uncertain) unconfirmed.set(habit.id,request); else unconfirmed.delete(habit.id);

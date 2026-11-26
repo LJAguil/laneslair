@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { deleteReminder, loadNotificationSettings, saveReminder } from "@/lib/push/actions";
+import { controlReminder, deleteReminder, loadNotificationSettings, saveReminder } from "@/lib/push/actions";
+import type { ReminderControl } from "@/lib/push/reminder-controls";
 import type { NotificationPreferences, ReminderRule } from "@/lib/push/types";
 import type { ReminderKind } from "@/lib/push/reminder-draft";
 
@@ -15,6 +16,7 @@ interface ReminderContext extends ReminderState {
   reload: () => Promise<void>;
   save: (input: Omit<ReminderRule,"id">) => Promise<void>;
   remove: (rule: ReminderRule) => Promise<void>;
+  control: (rule: ReminderRule, action: ReminderControl) => Promise<void>;
 }
 const Context = createContext<ReminderContext | null>(null);
 export function ReminderProvider({ children }: { children: ReactNode }) {
@@ -42,7 +44,13 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
     revision.current++;
     setState(previous=>({...previous,rules:previous.rules.filter(r=>r.id!==rule.id)}));
   },[]);
-  const value=useMemo(()=>({...state,reload,save,remove}),[state,reload,save,remove]);
+  const control = useCallback(async (rule: ReminderRule, action: ReminderControl) => {
+    const result = await controlReminder(rule.id, action);
+    if (!result.ok) throw new Error(result.error);
+    revision.current++;
+    setState(previous => ({ ...previous, rules: previous.rules.map(item => item.id === rule.id ? result.data : item) }));
+  }, []);
+  const value=useMemo(()=>({...state,reload,save,remove,control}),[state,reload,save,remove,control]);
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 export function useReminders() {

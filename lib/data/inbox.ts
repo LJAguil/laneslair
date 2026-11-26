@@ -77,6 +77,15 @@ export async function updateNote(userId: string, id: string, changes: { body?: s
   return noteFromRow(data as NoteRow);
 }
 
+export async function undoCaptureArchive(userId: string, note: InboxNote): Promise<InboxNote> {
+  if (!note.archivedAt) throw new TaskDataError("This capture is not archived.");
+  const { data, error } = await createClient().from("inbox_notes")
+    .update({ archived_at: null, updated_at: new Date().toISOString() })
+    .eq("user_id", userId).eq("id", note.id).eq("archived_at", note.archivedAt).eq("updated_at", note.updatedAt).select(COLUMNS).single();
+  if (error) throw new TaskDataError("Couldn't undo. This capture may have changed; reload Inbox before trying again.");
+  return noteFromRow(data as NoteRow);
+}
+
 /** All creation/linking happens atomically in the RPC, never as two client writes. */
 export async function convertNote(userId: string, noteId: string, input: NewTaskInput): Promise<{ note: InboxNote; task: Task | null }> {
   const fields = buildTaskInsert(userId, input);

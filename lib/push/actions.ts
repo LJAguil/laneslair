@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { pushConfiguration, sendPush } from "./send";
 import { uuid, validateSubscription, validatePreferences, validateReminder } from "./validation";
 import type { ActionResult, DeviceSubscription, NotificationPreferences, PushDevice, ReminderRule } from "./types";
+import { reminderControlPatch, type ReminderControl } from "./reminder-controls";
 
 async function account() {
   const db = await createClient();
@@ -118,5 +119,22 @@ export async function deleteReminder(id: string) {
     uuid(id); const { db, userId } = await account();
     const removed = await db.from("reminder_rules").delete().eq("id",id).eq("user_id",userId);
     databaseError(removed.error); return null;
+  });
+}
+
+export async function controlReminder(id: string, action: ReminderControl) {
+  return result(async () => {
+    uuid(id); const { db, userId } = await account();
+    const current = await db.from("reminder_rules").select("id,task_id,habit_id,enabled,local_date,local_time,time_zone").eq("id", id).eq("user_id", userId).single();
+    databaseError(current.error);
+    const rule = current.data as ReminderRule;
+    const patch = reminderControlPatch(rule, action, Date.now());
+    validateReminder({ ...rule, ...patch });
+    let query = db.from("reminder_rules").update(patch).eq("id", id).eq("user_id", userId)
+      .eq("enabled", rule.enabled).eq("local_time", rule.local_time).eq("time_zone", rule.time_zone);
+    query = rule.local_date ? query.eq("local_date", rule.local_date) : query.is("local_date", null);
+    const saved = await query.select("id,task_id,habit_id,enabled,local_date,local_time,time_zone").single();
+    if (saved.error?.code === "PGRST116") throw new Error("This reminder changed. Reload reminders before trying again.");
+    databaseError(saved.error); return saved.data as ReminderRule;
   });
 }

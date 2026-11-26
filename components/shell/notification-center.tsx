@@ -8,6 +8,7 @@ import { TaskFormDialog } from "@/components/tasks/task-form-dialog";
 import { useAppActions, useAppState } from "@/lib/store/app-store";
 import { taskNotifications } from "@/lib/task-notifications";
 import { cn } from "@/lib/utils";
+import { ReminderButton } from "@/components/reminders/reminder-button";
 
 export function NotificationCenter() {
   const { tasks, tasksStatus, tasksError, today, now } = useAppState();
@@ -25,14 +26,14 @@ export function NotificationCenter() {
       triggerClassName="relative inline-flex h-10 w-10 items-center justify-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-fg">
       {close => <div>
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
-          <h2 className="text-sm font-semibold">Notifications</h2>
+          <h2 className="text-sm font-semibold">Deadline attention</h2>
           <Button size="sm" variant="ghost" disabled={!unread} onClick={() => setRead(previous => new Set([...previous, ...notifications.map(n => n.id)]))}>Mark all read</Button>
         </div>
-        <p className="px-4 pt-3 text-xs text-subtle">Your due-today and overdue tasks. Read marks last for this app session. Push reminders are separate.</p>
+        <p className="px-4 pt-3 text-xs text-subtle">Your due-today and overdue tasks. Read marks last for this app session. The bell beside an item controls push reminders you requested; muting one won’t hide an overdue deadline here.</p>
         {tasksStatus === "loading" && <p role="status" className="p-4 text-sm text-muted">Loading your tasks…</p>}
         {tasksStatus === "error" && <div role="alert" className="space-y-2 p-4"><p className="text-sm text-danger">{tasksError ?? "Couldn't load your tasks."}</p><Button onClick={() => void loadTasks()}>Retry tasks</Button></div>}
         {tasksStatus === "ready" && !notifications.length && <p className="p-4 text-sm text-muted">No tasks due today or overdue.</p>}
-        <ul className="max-h-96 overflow-y-auto py-1">{notifications.map(n => <li key={n.id}>
+        <ul className="max-h-96 overflow-y-auto py-1">{notifications.map(n => <li key={n.id} className="flex items-center pr-3">
           <button type="button" className="flex min-h-11 w-full gap-3 px-4 py-3 text-left hover:bg-hover" onClick={() => {
             setRead(previous => new Set([...previous, n.id])); setEditingId(n.taskId); close();
           }}>
@@ -41,6 +42,7 @@ export function NotificationCenter() {
               <span className="block text-xs text-subtle">{n.body}</span>{!read.has(n.id) && <span className="sr-only">Unread</span>}
             </span>
           </button>
+          <ReminderButton kind="task" id={n.taskId} name={n.title} />
         </li>)}</ul>
       </div>}
     </Popover>

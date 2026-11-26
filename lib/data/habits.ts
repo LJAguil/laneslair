@@ -109,3 +109,14 @@ export async function recordHabitProgress(request: HabitProgressRequest): Promis
   if (error) fail("save habit progress", error);
   return (data as { log: HabitLogRow }).log;
 }
+
+/** Undo a confirmed positive addition only if that date still has the same saved total. */
+export async function undoHabitAddition(userId: string, log: HabitLogRow, amount: number): Promise<HabitLogRow> {
+  if (!(amount > 0 && amount <= Number(log.amount))) throw new TaskDataError("This entry cannot be undone. Use the habit's correction controls.");
+  const { data, error } = await createClient().from("habit_logs")
+    .update({ amount: Math.round((Number(log.amount) - amount) * 1000) / 1000 })
+    .eq("user_id", userId).eq("habit_id", log.habit_id).eq("completed_on", log.completed_on)
+    .eq("amount", log.amount).eq("target", log.target).select("habit_id,completed_on,amount,target").single();
+  if (error) throw new TaskDataError("Couldn't undo. This day's total may have changed; reload habits and use the correction controls.");
+  return data as HabitLogRow;
+}

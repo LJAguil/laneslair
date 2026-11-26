@@ -290,3 +290,15 @@ export async function deleteTask(userId: string, id: string): Promise<void> {
   if (error) fail("delete the task", error);
   if (!data || data.length === 0) fail("delete the task", { code: "PGRST116", message: "No matching task" } as PostgrestError);
 }
+
+/** Guard against undo overwriting a later completion from another device. */
+export async function undoTaskCompletion(userId: string, saved: Task, previous: Task): Promise<Task> {
+  if (!saved.completedAt) throw new TaskDataError("Reload tasks before undoing this completion.");
+  const from = new Date(saved.completedAt).getTime();
+  const { data, error } = await withTaskColumns(columns => createClient().from("tasks")
+    .update({ status: previous.status, completed_at: null, updated_at: new Date().toISOString() })
+    .eq("user_id", userId).eq("id", saved.id).eq("status", "done")
+    .gte("completed_at", new Date(from).toISOString()).lt("completed_at", new Date(from + 1000).toISOString()).select(columns).single());
+  if (error) throw new TaskDataError("Couldn't undo. This task may have changed; reload tasks before trying again.");
+  return rowToTask(data as TaskRow);
+}

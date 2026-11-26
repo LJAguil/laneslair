@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks=vi.hoisted(()=>({client:vi.fn(),send:vi.fn(),configuration:vi.fn()}));
 vi.mock("@/lib/supabase/server",()=>({createClient:mocks.client}));
 vi.mock("./send",()=>({sendPush:mocks.send,pushConfiguration:mocks.configuration}));
-import { deleteReminder, loadNotificationSettings, registerPushDevice, removePushDevice, saveNotificationPreferences, saveReminder, testPushDevice } from "./actions";
+import { controlReminder, deleteReminder, loadNotificationSettings, registerPushDevice, removePushDevice, saveNotificationPreferences, saveReminder, testPushDevice } from "./actions";
 const USER="11111111-1111-4111-8111-111111111111",DEVICE="22222222-2222-4222-8222-222222222222";
 let from:ReturnType<typeof vi.fn>,rpc:ReturnType<typeof vi.fn>,getUser:ReturnType<typeof vi.fn>;
 let calls: {table:string;method:string;args:unknown[]}[];let replies:{data:unknown;error:unknown}[];
@@ -10,13 +10,26 @@ beforeEach(()=>{
   vi.clearAllMocks();calls=[];replies=[];
   from=vi.fn((table:string)=>{
     const chain:Record<string,unknown>={};
-    for(const method of ['select','insert','update','delete','upsert','eq','single','maybeSingle'])chain[method]=(...args:unknown[])=>{calls.push({table,method,args});return chain;};
+    for(const method of ['select','insert','update','delete','upsert','eq','is','single','maybeSingle'])chain[method]=(...args:unknown[])=>{calls.push({table,method,args});return chain;};
     chain.then=(resolve:(value:unknown)=>void)=>Promise.resolve(replies.shift()??{data:{id:DEVICE},error:null}).then(resolve);return chain;
   });
   rpc=vi.fn().mockResolvedValue({data:[],error:null});getUser=vi.fn().mockResolvedValue({data:{user:{id:USER}},error:null});
   mocks.client.mockResolvedValue({from,rpc,auth:{getUser}});mocks.send.mockResolvedValue('accepted');
 });
 describe('authenticated push actions',()=>{
+  it('changes only the owned reminder and refuses concurrent changes or unauthenticated requests',async()=>{
+    const rule={id:DEVICE,task_id:USER,habit_id:null,enabled:true,local_date:'2026-11-26',local_time:'09:00:00',time_zone:'UTC'};
+    replies.push({data:rule,error:null},{data:{...rule,enabled:false},error:null});
+    expect((await controlReminder(DEVICE,'mute')).ok).toBe(true);
+    expect(calls.find(c=>c.method==='update')?.args[0]).toEqual({enabled:false});
+    expect(calls).toContainEqual({table:'reminder_rules',method:'eq',args:['user_id',USER]});
+    expect(calls).toContainEqual({table:'reminder_rules',method:'eq',args:['local_date',rule.local_date]});
+    expect(calls.some(c=>c.table==='tasks')).toBe(false);
+    replies.push({data:rule,error:null},{data:null,error:{code:'PGRST116'}});
+    const changed=await controlReminder(DEVICE,'snooze15');expect(changed.ok).toBe(false);if(!changed.ok)expect(changed.error).toMatch(/changed/);
+    getUser.mockResolvedValue({data:{user:null},error:null});const count=calls.length;
+    expect((await controlReminder(DEVICE,'mute')).ok).toBe(false);expect(calls).toHaveLength(count);
+  });
   it('verifies the user before all database mutations and tests',async()=>{
     getUser.mockResolvedValue({data:{user:null},error:{message:'expired'}});
     for(const call of [()=>loadNotificationSettings(DEVICE),()=>removePushDevice(DEVICE),()=>testPushDevice(DEVICE,'https://web.push.apple.com/test'),()=>deleteReminder(DEVICE),()=>saveNotificationPreferences({paused:true,time_zone:'UTC',quiet_start:null,quiet_end:null})]){

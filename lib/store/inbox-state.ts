@@ -2,6 +2,7 @@ import * as data from "@/lib/data/inbox";
 import { getVerifiedUserId, TaskDataError } from "@/lib/data/tasks";
 import type { DailyFocus, InboxNote, NewTaskInput, Task } from "@/lib/types";
 import type { CaptureWriteScope } from "./capture-drafts";
+import { undoAction, type Notify } from "@/lib/undo";
 
 type Status = "loading" | "ready" | "error";
 export interface InboxSlice {
@@ -46,7 +47,7 @@ export function reduceInbox(state: InboxSlice, action: InboxAction): InboxSlice 
 const messageOf = (err: unknown) => err instanceof TaskDataError ? err.message : "Couldn't reach your account. Please try again.";
 type Dispatch = (action: InboxAction | { type: "task/add"; task: Task }) => void;
 
-export function createInboxActions(dispatch: Dispatch, notify: (kind: "success" | "error", message: string) => void) {
+export function createInboxActions(dispatch: Dispatch, notify: Notify) {
   let readSeq = 0;
   let focusReadSeq = 0;
   let revision = 0;
@@ -106,8 +107,16 @@ export function createInboxActions(dispatch: Dispatch, notify: (kind: "success" 
     },
     async archiveCapture(note: InboxNote, archived: boolean) {
       return withNote(note.id, async () => {
-        saved(await data.updateNote(await getVerifiedUserId(), note.id, { archived }));
-        notify("success", archived ? "Capture archived" : "Capture restored");
+        const owner = await getVerifiedUserId();
+        const updated = await data.updateNote(owner, note.id, { archived });
+        saved(updated);
+        notify("success", archived ? "Capture archived" : "Capture restored", archived ? undoAction(async () => {
+          if (writes.get(note.id)?.note !== updated) throw new TaskDataError("This capture changed. Reload Inbox before undoing.");
+          await withNote(note.id, async () => {
+            if (await getVerifiedUserId() !== owner) throw new TaskDataError("Sign in to the original account before undoing.");
+            saved(await data.undoCaptureArchive(owner, updated));
+          });
+        }) : undefined);
       });
     },
     async convertCapture(note: InboxNote, input: NewTaskInput) {

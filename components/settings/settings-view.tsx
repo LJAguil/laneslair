@@ -9,6 +9,7 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/field";
 import { useAppActions, useAppState } from "@/lib/store/app-store";
 import { PushSettings } from "./push-settings";
+import { DataExport } from "./data-export";
 
 export function SettingsView() {
   return (
@@ -18,6 +19,7 @@ export function SettingsView() {
         <ProfileSection />
         <AppearanceSection />
         <PushSettings />
+        <DataExport />
       </div>
     </>
   );

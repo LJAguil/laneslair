@@ -21,6 +21,7 @@ import { sampleEvents } from "@/lib/sample-data/events";
 import { sampleGoals } from "@/lib/sample-data/habits-goals";
 import { sampleConversations, sampleProfile, sampleSchedule } from "@/lib/sample-data/misc";
 import * as projectData from "@/lib/data/projects";
+import { undoAction, type UndoAction } from "@/lib/undo";
 import type {
   AppNotification,
   ChatMessage,
@@ -41,6 +42,7 @@ export interface Notice {
   id: number;
   kind: "success" | "error";
   message: string;
+  undo?: UndoAction;
 }
 
 export interface AppState extends InboxSlice, HabitSlice, JournalSlice {
@@ -189,7 +191,7 @@ function reducer(state: AppState, action: Action): AppState {
 const messageOf = (err: unknown) =>
   err instanceof taskData.TaskDataError ? err.message : "Something went wrong. Please try again.";
 
-function createActions(dispatch: React.Dispatch<Action>) {
+export function createActions(dispatch: React.Dispatch<Action>) {
   let noticeId = 0;
   let loadSeq = 0;
   let taskRevision = 0;
@@ -200,8 +202,8 @@ function createActions(dispatch: React.Dispatch<Action>) {
   // ahead of the next render.
   const inFlight = new Set<string>();
 
-  const notify = (kind: Notice["kind"], message: string) =>
-    dispatch({ type: "notice/show", notice: { id: ++noticeId, kind, message } });
+  const notify = (kind: Notice["kind"], message: string, undo?: UndoAction) =>
+    dispatch({ type: "notice/show", notice: { id: ++noticeId, kind, message, undo } });
 
   async function withPending<T>(id: string, work: () => Promise<T>): Promise<T> {
     inFlight.add(id);
@@ -327,7 +329,15 @@ function createActions(dispatch: React.Dispatch<Action>) {
       await withPending(task.id, async () => {
         try {
           const userId = await taskData.getVerifiedUserId();
-          recordTaskAction({ type: "task/replace", task: await taskData.updateTaskStatus(userId, task.id, nextStatus) });
+          const saved = await taskData.updateTaskStatus(userId, task.id, nextStatus);
+          recordTaskAction({ type: "task/replace", task: saved });
+          if (nextStatus === "done") notify("success", "Task completed", undoAction(async () => {
+            if (inFlight.has(task.id) || taskWrites.get(task.id)?.task !== saved) throw new taskData.TaskDataError("This task changed. Reload tasks before undoing.");
+            await withPending(task.id, async () => {
+              if (await taskData.getVerifiedUserId() !== userId) throw new taskData.TaskDataError("Sign in to the original account before undoing.");
+              recordTaskAction({ type: "task/replace", task: await taskData.undoTaskCompletion(userId, saved, task) });
+            });
+          }));
         } catch (err) {
           recordTaskAction({ type: "task/replace", task }); // restore exactly what was there before
           notify("error", messageOf(err));
