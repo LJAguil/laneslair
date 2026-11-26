@@ -3,6 +3,14 @@ on:
   schedule:
     - cron: '17 11 * * *'
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Inspect only (no job) or the approved first data-only pilot'
+        type: choice
+        default: inspect-only
+        options:
+          - inspect-only
+          - controlled-pilot
 permissions:
   contents: read
 concurrency:
@@ -10,16 +18,21 @@ concurrency:
   cancel-in-progress: false
 jobs:
   refresh:
-    # Inert until separately approved and enabled. Never run on private repositories or forks.
+    # A first manual pilot does not enable the recurring schedule or production reader.
     if: >-
       github.repository == 'LJAguil/laneslair' &&
       github.event.repository.private == false &&
       github.ref == 'refs/heads/main' &&
-      vars.DISCOVER_DAILY_ENABLED == 'true'
+      ((github.event_name == 'schedule' && vars.DISCOVER_DAILY_ENABLED == 'true') ||
+       (github.event_name == 'workflow_dispatch' && inputs.mode == 'controlled-pilot' && vars.DISCOVER_DAILY_ENABLED != 'true'))
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: write
+    env:
+      DISCOVER_DAILY_ENABLED: ${{ vars.DISCOVER_DAILY_ENABLED }}
+      DISCOVER_RUN_MODE: ${{ inputs.mode }}
+      DISCOVER_REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,9 +45,7 @@ jobs:
         run: node scripts/discover/daily-update.mjs prepare
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          DISCOVER_DAILY_ENABLED: ${{ vars.DISCOVER_DAILY_ENABLED }}
       - name: Fetch subscriptions and save public metadata
         run: node scripts/discover/daily-update.mjs fetch
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          DISCOVER_DAILY_ENABLED: ${{ vars.DISCOVER_DAILY_ENABLED }}

@@ -1,5 +1,13 @@
 # Daily Discover subscriptions — prepared November 19, 2026
 
+**November 26 update:** the owner approved a first, data-only controlled pilot.
+See [pilot runbook](DISCOVER_CONTROLLED_PILOT_2026-11-26.md). Its manual control is
+independent of the recurring switch: default dispatch skips the job; explicit
+`controlled-pilot` requires the recurring switch off and an absent data branch.
+An existing branch, even a failed/pending reservation, blocks another pilot.
+This supersedes the shared-gate manual-run instructions below. Production reads
+and recurring activation remain outside the first-pilot authorization.
+
 The owner authorized implementation of daily news updates and one verified local
 event feed. This supersedes the manual-only design direction for these selected
 feeds, but **activation and publication are still pending**. No commit, push,

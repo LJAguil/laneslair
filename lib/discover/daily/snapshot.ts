@@ -12,6 +12,17 @@ export interface DailySnapshot { version: 1; updatedAt: string; sources: DailySo
 export function emptyDailySnapshot(now: number): DailySnapshot {
   return { version: 1, updatedAt: new Date(now).toISOString(), sources: dailySourceIds.map(id => ({ id, attempts: [], checkedAt: null, fetchedAt: null, etag: null, lastModified: null, retryAfterAt: null, error: null, items: [] })) };
 }
+/** Carry known earlier captures into the first durable ledger; never invent a feed check. */
+export function bootstrapDailySnapshot(now: number): DailySnapshot {
+  const previousAttempts: Record<DailySourceId, string> = {
+    "nasa-daily": "2026-11-13T19:30:14.739Z",
+    "illuminator-daily": "2026-11-20T05:18:28.000Z",
+    "ruston-athletics": "2026-11-20T05:17:54.000Z",
+  };
+  const snapshot = emptyDailySnapshot(now);
+  for (const source of snapshot.sources) source.attempts = [previousAttempts[source.id]];
+  return decodeDailySnapshot(JSON.stringify(snapshot), now);
+}
 const object = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value);
 function keys(value: Record<string, unknown>, allowed: string[]) { return Object.keys(value).sort().join() === [...allowed].sort().join(); }
 function recordValid(value: unknown, id: DailySourceId, now: number): value is DailyRecord {

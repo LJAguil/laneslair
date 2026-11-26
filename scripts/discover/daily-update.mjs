@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import ts from "typescript";
 import { readStore, writeStore } from "./daily-store.mjs";
+import { dailyAuthority, assertPilotStore } from "./daily-authority.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url)), output = path.join(root, "build/discover-daily");
 const mode = process.argv[2];
@@ -13,7 +14,7 @@ if (process.argv.length !== 3 || !["prepare", "fetch", "sample", "--help"].inclu
   process.stdout.write("sample: offline synthetic validation only. prepare/fetch: gated GitHub workflow only; persistent reservation must precede publisher requests.\n");
 } else {
   try {
-    if (mode !== "sample" && (process.env.GITHUB_ACTIONS !== "true" || process.env.GITHUB_REPOSITORY !== "LJAguil/laneslair" || process.env.DISCOVER_DAILY_ENABLED !== "true")) throw Error("daily-workflow-disabled");
+    const authority = mode === "sample" ? null : dailyAuthority(process.env);
     const modules = path.join(output, "modules"); await mkdir(modules, { recursive: true });
     await writeFile(path.join(modules, "package.json"), '{"type":"commonjs"}');
     for (const name of ["daily/policy", "daily/parsers", "daily/snapshot", "daily/transport", "feeds/nasa", "feeds/policy"]) {
@@ -22,12 +23,13 @@ if (process.argv.length !== 3 || !["prepare", "fetch", "sample", "--help"].inclu
       await writeFile(target, ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText);
     }
     const require = createRequire(import.meta.url);
-    const { emptyDailySnapshot, decodeDailySnapshot, reserveDaily } = require(path.join(modules, "daily/snapshot.js"));
+    const { emptyDailySnapshot, bootstrapDailySnapshot, decodeDailySnapshot, reserveDaily } = require(path.join(modules, "daily/snapshot.js"));
     const { completeDaily } = require(path.join(modules, "daily/transport.js"));
     const statePath = path.join(output, "reservation.json");
     if (mode === "prepare") {
       const stored = await readStore(), now = Date.now();
-      const snapshot = stored.text === null ? emptyDailySnapshot(now) : decodeDailySnapshot(stored.text, now);
+      assertPilotStore(authority, stored.head);
+      const snapshot = stored.text === null ? bootstrapDailySnapshot(now) : decodeDailySnapshot(stored.text, now);
       const reservation = reserveDaily(snapshot, now);
       const head = reservation.ids.length ? await writeStore(JSON.stringify(reservation.snapshot), stored.head) : stored.head;
       // Only written after the pre-request reservation is durable. No API token stored.
