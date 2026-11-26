@@ -11,6 +11,21 @@ const note: InboxNote = { id: "capture", body: "Original", createdAt: "2026-11-0
 beforeEach(() => { vi.clearAllMocks(); });
 
 describe("Inbox store reliability", () => {
+  it("refuses a draft bound to a different verified account before writing", async () => {
+    const actions = createInboxActions(vi.fn(), vi.fn());
+    await expect(actions.addCapture("capture", "Invented text", { accountId: "other-user", current: () => true })).rejects.toThrow(/account changed/);
+    expect(data.createNote).not.toHaveBeenCalled();
+  });
+  it("does not publish a late save or toast after the draft account changes", async () => {
+    let finish!: (value: InboxNote) => void, current = true;
+    vi.mocked(data.createNote).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    const dispatch = vi.fn(), notify = vi.fn();
+    const saving = createInboxActions(dispatch, notify).addCapture("capture", "Invented text", { accountId: "user", current: () => current });
+    await vi.waitFor(() => expect(data.createNote).toHaveBeenCalled());
+    current = false; const rejected = expect(saving).rejects.toThrow(/account changed/); finish(note); await rejected;
+    expect(dispatch.mock.calls.some(([action]) => action.type === "inbox/saved")).toBe(false);
+    expect(notify).not.toHaveBeenCalled();
+  });
   it("does not publish a note or success toast when saving fails", async () => {
     vi.mocked(data.createNote).mockRejectedValueOnce(new TaskDataError("Offline"));
     const dispatch = vi.fn(); const notify = vi.fn();

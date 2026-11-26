@@ -8,19 +8,22 @@ vi.mock("@/lib/store/app-store",()=>({useAppState:()=>mock.state,useAppActions:(
 vi.mock("next/navigation",()=>({useSearchParams:()=>new URLSearchParams("date=2026-11-07"),useRouter:()=>({push:mock.push})}));
 import { JournalView } from "@/components/journal/journal-view";
 import { InboxView } from "@/components/inbox/inbox-view";
+import { CaptureDraftContext } from "@/components/inbox/capture-draft-provider";
+import { createCaptureDrafts } from "@/lib/store/capture-drafts";
 import { navItems } from "@/components/shell/nav-items";
 const DATE="2026-11-07",note={id:"note",body:"My original capture",createdAt:"2026-11-07T12:00Z",updatedAt:"2026-11-07T12:00Z"};
+const renderInbox = () => renderToStaticMarkup(createElement(CaptureDraftContext.Provider, { value: createCaptureDrafts(async () => {}, () => ({ message: "Invented failure", conflict: false })) }, createElement(InboxView)));
 beforeEach(()=>{
   vi.clearAllMocks();mock.state={...initialJournalState,journalEntries:{},today:DATE,journalIndexStatus:"ready",journalDayStatus:{[DATE]:"ready"},journalDrafts:{[DATE]:{body:"",base:null}},inboxNotes:[note],inboxStatus:"ready",inboxError:null,pendingNoteIds:[],tasks:[],tasksStatus:"ready"} as unknown as AppState;
 });
 describe("Journal/Inbox rendered controls (simulated, not live browser interaction)",()=>{
   it("offers Add to journal next to Make this a task without writing anything on open",()=>{
-    const html=renderToStaticMarkup(createElement(InboxView));expect(html).toContain("Add to journal");expect(html).toContain("Make this a task");expect(html).toContain("My original capture");
+    const html=renderInbox();expect(html).toContain("Add to journal");expect(html).toContain("Make this a task");expect(html).toContain("My original capture");
     expect(mock.save).not.toHaveBeenCalled();expect(mock.append).not.toHaveBeenCalled();
   });
   it("moves linked captures out of unsorted Inbox without removing originals",()=>{
     mock.state.journalSources=[{id:"source",noteId:note.id,entryId:"entry",date:DATE,addedAt:note.createdAt}];
-    const html=renderToStaticMarkup(createElement(InboxView));expect(html).toContain("Room for your next idea");expect(mock.state.inboxNotes).toEqual([note]);
+    const html=renderInbox();expect(html).toContain("Room for your next idea");expect(mock.state.inboxNotes).toEqual([note]);
   });
   it("shows an empty dated editor with explicit save and no claim of autosave",()=>{
     const html=renderToStaticMarkup(createElement(JournalView));expect(html).toContain('type="date"');expect(html).toContain('id="journal-body"');expect(html).toContain("Save entry");expect(html).toContain("Save before closing or refreshing");

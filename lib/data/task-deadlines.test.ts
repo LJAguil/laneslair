@@ -9,7 +9,7 @@ vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({
   },
   rpc: (...args: unknown[]) => { fake.calls.push({ method: "rpc", args }); return Promise.resolve(fake.results.shift()); },
 }) }));
-import { buildTaskInsert, buildTaskUpdate, createTask, fetchTasks, rowToTask, updateTaskStatus } from "./tasks";
+import { buildTaskInsert, buildTaskUpdate, buildTaskDueUpdate, updateTaskDueDate, createTask, fetchTasks, rowToTask, updateTaskStatus } from "./tasks";
 import { convertNote } from "./inbox";
 
 const USER = "11111111-1111-4111-8111-111111111111";
@@ -17,6 +17,18 @@ const row = { id: USER, user_id: USER, title: "Invented", description: "", prior
 const missing = { code: "42703", message: "column tasks.due_has_time does not exist" };
 beforeEach(() => { fake.calls = []; fake.results = []; });
 describe("timed deadline transport (no live database)", () => {
+  it("moves only due fields, preserving the time and protecting unrelated stale fields", async () => {
+    const task = rowToTask(row), update = buildTaskDueUpdate(task, "2026-11-12");
+    expect(update).toEqual({ due_at: taskDueTimestamp("2026-11-12", "12:00"), due_has_time: true, updated_at: expect.any(String) });
+    expect(buildTaskDueUpdate(task)).toMatchObject({ due_at: null, due_has_time: false });
+    expect(buildTaskDueUpdate({})).toEqual({ due_at: null, updated_at: expect.any(String) });
+    expect(() => buildTaskDueUpdate(task, "2026-02-30")).toThrow(/valid due date/);
+    fake.results = [{ data: { ...row, due_at: update.due_at }, error: null }];
+    await updateTaskDueDate(USER, task, "2026-11-12");
+    expect(fake.calls.find(call => call.method === "update")!.args[0]).toMatchObject({ due_at: update.due_at });
+    expect(fake.calls.filter(call => call.method === "eq").map(call => call.args)).toEqual([["id", task.id], ["user_id", USER]]);
+    expect(fake.calls.some(call => call.method === "rpc" || call.method === "insert")).toBe(false);
+  });
   it("round-trips explicit noon without confusing existing date-only noon tasks", () => {
     expect(rowToTask(row)).toMatchObject({ dueTime: "12:00", dueAt: row.due_at });
     expect(rowToTask({ ...row, due_has_time: false }).dueTime).toBeUndefined();

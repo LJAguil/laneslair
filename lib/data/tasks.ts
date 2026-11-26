@@ -255,6 +255,22 @@ export async function updateTask(userId: string, previous: Task, changes: TaskCh
   return rowToTask(data as TaskRow);
 }
 
+/** A date-only patch: never resubmit stale title, notes, status, project or reminder fields. */
+export function buildTaskDueUpdate(previous: Pick<Task, "dueTime">, dueDate?: ISODate, now = new Date()): TaskUpdate {
+  return {
+    due_at: dueTimestamp(dueDate, dueDate ? previous.dueTime : undefined),
+    ...(previous.dueTime ? { due_has_time: !!dueDate } : {}),
+    updated_at: now.toISOString(),
+  };
+}
+export async function updateTaskDueDate(userId: string, previous: Task, dueDate?: ISODate): Promise<Task> {
+  const fields = buildTaskDueUpdate(previous, dueDate);
+  const { data, error } = await withTaskColumns(columns => createClient().from("tasks")
+    .update(fields).eq("id", previous.id).eq("user_id", userId).select(columns).single(), !!previous.dueTime);
+  if (error) fail("move the task's due date", error);
+  return rowToTask(data as TaskRow);
+}
+
 /** Sets a task's status, keeping completed_at in sync (set when done, cleared otherwise). */
 export async function updateTaskStatus(userId: string, id: string, status: TaskStatus): Promise<Task> {
   const now = new Date().toISOString();

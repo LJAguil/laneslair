@@ -1,6 +1,7 @@
 import * as data from "@/lib/data/inbox";
 import { getVerifiedUserId, TaskDataError } from "@/lib/data/tasks";
 import type { DailyFocus, InboxNote, NewTaskInput, Task } from "@/lib/types";
+import type { CaptureWriteScope } from "./capture-drafts";
 
 type Status = "loading" | "ready" | "error";
 export interface InboxSlice {
@@ -63,6 +64,15 @@ export function createInboxActions(dispatch: Dispatch, notify: (kind: "success" 
     try { return await work(); }
     finally { inFlight.delete(id); dispatch({ type: "inbox/pending", id, pending: false }); }
   }
+  async function captureOwner(scope?: CaptureWriteScope) {
+    if (scope && !scope.current()) throw new TaskDataError("Your capture account changed. Reload before saving.");
+    const userId = await getVerifiedUserId();
+    if (scope && (!scope.current() || scope.accountId !== userId)) throw new TaskDataError("Your capture account changed. Reload before saving.");
+    return userId;
+  }
+  function currentCapture(scope?: CaptureWriteScope) {
+    if (scope && !scope.current()) throw new TaskDataError("Your capture account changed. Reload before saving.");
+  }
   return {
     async loadInbox({ showLoading = true } = {}) {
       const seq = ++readSeq;
@@ -77,17 +87,19 @@ export function createInboxActions(dispatch: Dispatch, notify: (kind: "success" 
         dispatch({ type: "inbox/loaded", notes: Array.from(merged.values()).sort((a, b) => b.createdAt.localeCompare(a.createdAt)) });
       } catch (err) { if (seq === readSeq) dispatch({ type: "inbox/failed", message: messageOf(err) }); }
     },
-    async addCapture(id: string, body: string) {
+    async addCapture(id: string, body: string, scope?: CaptureWriteScope) {
       return withNote(id, async () => {
-        const note = await data.createNote(await getVerifiedUserId(), id, body);
+        const note = await data.createNote(await captureOwner(scope), id, body);
+        currentCapture(scope);
         saved(note);
         notify("success", "Saved to Inbox");
         return note;
       });
     },
-    async editCapture(id: string, body: string) {
+    async editCapture(id: string, body: string, scope?: CaptureWriteScope) {
       return withNote(id, async () => {
-        const note = await data.updateNote(await getVerifiedUserId(), id, { body });
+        const note = await data.updateNote(await captureOwner(scope), id, { body });
+        currentCapture(scope);
         saved(note);
         notify("success", "Capture updated");
       });

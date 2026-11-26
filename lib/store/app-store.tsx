@@ -301,6 +301,17 @@ function createActions(dispatch: React.Dispatch<Action>) {
         return true;
       });
     },
+    async rescheduleTask(task: Task, dueDate?: ISODate): Promise<boolean> {
+      if (inFlight.has(task.id)) throw new taskData.TaskDataError("This task is still saving. Try again in a moment.");
+      if (task.dueDate === dueDate) return false;
+      return withPending(task.id, async () => {
+        const userId = await taskData.getVerifiedUserId();
+        const saved = await taskData.updateTaskDueDate(userId, task, dueDate);
+        recordTaskAction({ type: "task/replace", task: saved });
+        notify("success", dueDate ? "Task due date moved" : "Task due date cleared");
+        return true;
+      });
+    },
     /** Completes an open task or reopens a finished one. Updates instantly, reverts if the save fails. */
     async toggleTask(task: Task) {
       if (inFlight.has(task.id)) return;

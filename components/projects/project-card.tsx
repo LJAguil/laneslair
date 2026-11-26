@@ -5,6 +5,7 @@ import { ProgressBar } from "@/components/ui/progress";
 import { formatShortDate } from "@/lib/dates";
 import type { Project } from "@/lib/types";
 import { accentClasses, cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface ProjectCardProps {
   project: Project;
@@ -23,7 +24,7 @@ export function ProjectCard({ project, progress, compact, onEdit, pending, tasks
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
           <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", accent.dot)} aria-hidden="true" />
-          <h3 className="truncate text-sm font-semibold">{project.name}</h3>
+          <h3 className="truncate text-sm font-semibold"><Link href={`/projects/${project.id}`} className="rounded hover:text-accent-strong hover:underline">{project.name}</Link></h3>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <ProjectStatusBadge status={project.status} />
@@ -52,6 +53,7 @@ export function ProjectCard({ project, progress, compact, onEdit, pending, tasks
           {project.dueDate ? `Due ${formatShortDate(project.dueDate)}` : "No due date"}
         </p>
       )}
+      <Link href={`/projects/${project.id}`} className="mt-2 inline-flex min-h-11 items-center rounded text-sm text-accent-strong hover:underline">Open project</Link>
     </article>
   );
 }

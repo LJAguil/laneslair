@@ -19,12 +19,13 @@ interface TaskFormDialogProps {
   /** When set, the dialog edits this task instead of creating a new one. */
   task?: Task | null;
   capture?: InboxNote;
+  defaultProjectId?: string;
   /** Called after a new task is created (edits show their own success message). */
   onCreated?: (title: string) => void;
 }
 
 /** Create-or-edit dialog. Nothing is written until "Add task" / "Save changes" succeeds. */
-export function TaskFormDialog({ open, onClose, task, capture, onCreated }: TaskFormDialogProps) {
+export function TaskFormDialog({ open, onClose, task, capture, onCreated, defaultProjectId }: TaskFormDialogProps) {
   const [saving, setSaving] = useState(false);
   const editing = !!task;
   return (
@@ -42,6 +43,7 @@ export function TaskFormDialog({ open, onClose, task, capture, onCreated }: Task
         key={task?.id ?? capture?.id ?? "new"}
         task={task ?? undefined}
         capture={capture}
+        defaultProjectId={defaultProjectId}
         onCancel={onClose}
         onSavingChange={setSaving}
         onDone={(title, created) => {
@@ -56,6 +58,7 @@ export function TaskFormDialog({ open, onClose, task, capture, onCreated }: Task
 interface TaskFormProps {
   task?: Task;
   capture?: InboxNote;
+  defaultProjectId?: string;
   onCancel: () => void;
   onDone: (title: string, created: boolean) => void;
   onSavingChange: (saving: boolean) => void;
@@ -68,7 +71,7 @@ const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
   { value: "cancelled", label: "Cancelled" },
 ];
 
-function TaskForm({ task, capture, onCancel, onDone, onSavingChange }: TaskFormProps) {
+function TaskForm({ task, capture, onCancel, onDone, onSavingChange, defaultProjectId }: TaskFormProps) {
   const { today, tasks, projects, projectsStatus, projectsError } = useAppState();
   const { addTask, editTask, loadProjects, convertCapture } = useAppActions();
   const id = useId();
@@ -81,7 +84,7 @@ function TaskForm({ task, capture, onCancel, onDone, onSavingChange }: TaskFormP
   const [priority, setPriority] = useState<Priority>(task?.priority ?? "medium");
   const [dueDate, setDueDate] = useState<string>(task ? (task.dueDate ?? "") : capture ? "" : today);
   const [dueTime, setDueTime] = useState(task?.dueTime ?? "");
-  const [projectId, setProjectId] = useState(task?.projectId ?? "");
+  const [projectId, setProjectId] = useState(task?.projectId ?? defaultProjectId ?? "");
   const [notes, setNotes] = useState(task?.notes ?? captureDefaults?.notes ?? "");
   const [status, setStatus] = useState<TaskStatus>(task?.status ?? "todo");
   const [error, setError] = useState<string | null>(null);

@@ -16,9 +16,10 @@ import { TopBar } from "./top-bar";
 import { ReminderProvider } from "@/components/reminders/reminder-provider";
 import { PlayProvider } from "@/components/play/play-provider";
 import { JournalDraftGuard } from "@/components/journal/journal-draft-guard";
+import { CaptureDraftProvider } from "@/components/inbox/capture-draft-provider";
 
 export function AppShell({ children }: { children: ReactNode }) {
-  return <ReminderProvider><PlayProvider><AppShellContent>{children}</AppShellContent></PlayProvider></ReminderProvider>;
+  return <CaptureDraftProvider><ReminderProvider><PlayProvider><AppShellContent>{children}</AppShellContent></PlayProvider></ReminderProvider></CaptureDraftProvider>;
 }
 
 function AppShellContent({ children }: { children: ReactNode }) {

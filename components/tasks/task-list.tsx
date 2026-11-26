@@ -14,6 +14,8 @@ import type { ISODate, Project, Task } from "@/lib/types";
 import { accentClasses, cn } from "@/lib/utils";
 import { TaskFormDialog } from "./task-form-dialog";
 import { ReminderButton } from "@/components/reminders/reminder-button";
+import { TaskReschedule } from "./task-reschedule";
+import Link from "next/link";
 
 interface TaskListProps {
   tasks: Task[];
@@ -136,7 +138,7 @@ export function TaskRow({ task, today, now, project, compact, pending, onToggle,
           {project && (
             <span className="inline-flex items-center gap-1.5">
               <span className={cn("h-2 w-2 rounded-full", accentClasses[project.color].dot)} aria-hidden="true" />
-              {project.name}
+              <Link href={`/projects/${project.id}`} className="rounded text-accent-strong hover:underline">{project.name}</Link>
             </span>
           )}
           {pending && (
@@ -149,6 +151,7 @@ export function TaskRow({ task, today, now, project, compact, pending, onToggle,
       </div>
       <div className="col-start-2 flex flex-wrap items-center justify-end gap-1 sm:contents">
       {cancelled ? <Badge>Cancelled</Badge> : !done && <PriorityBadge priority={task.priority} />}
+      {isOpen(task) && <TaskReschedule task={task} disabled={pending} />}
       <ReminderButton kind="task" id={task.id} name={task.title} disabled={pending} />
       {onEdit && (
         <RowAction label={`Edit “${task.title}”`} onClick={onEdit} disabled={pending}>
