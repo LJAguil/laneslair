@@ -5,6 +5,7 @@ import { ArrowRight, Compass, FolderKanban, ListChecks, Target, Trophy } from "l
 import Link from "next/link";
 import { EventRow } from "@/components/discover/event-row";
 import { GoalProgress } from "@/components/habits/goal-progress";
+import { GoalLoadState } from "@/components/habits/goal-load-state";
 import { HabitLoadState } from "@/components/habits/habit-load-state";
 import { HabitRow } from "@/components/habits/habit-row";
 import { ProjectLoadState } from "@/components/projects/project-load-state";
@@ -89,7 +90,8 @@ export function HabitsCard({ limit }: { limit?: number } = {}) {
 }
 
 export function GoalsCard() {
-  const { goals } = useAppState();
+  const { goals, goalsStatus } = useAppState();
+  const active = goals.filter(g => (g.status ?? "active") === "active");
   return (
     <Card>
       <CardHeader
@@ -97,11 +99,13 @@ export function GoalsCard() {
         icon={<Trophy className="h-[18px] w-[18px]" />}
         action={<ViewAll href="/habits#goals" label="View all goals" />}
       />
-      <div className="space-y-5">
-        {goals.map((g) => (
+      <GoalLoadState />
+      {goalsStatus === "ready" && active.length === 0 && <EmptyState title="Choose your next milestone" description="Create a goal or revisit your saved goals on Habits & Goals." />}
+      {goalsStatus === "ready" && <div className="space-y-5">
+        {active.slice(0, 4).map((g) => (
           <GoalProgress key={g.id} goal={g} />
         ))}
-      </div>
+      </div>}
     </Card>
   );
 }

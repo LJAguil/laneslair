@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Flame, Plus, RotateCcw, Target, Trophy } from "lucide-react";
+import { Archive, Flame, Plus, RotateCcw, Target } from "lucide-react";
 import { useState } from "react";
 import { EmptyState, PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -12,14 +12,14 @@ import { TaskDataError } from "@/lib/data/tasks";
 import { habitStreak, isCheckedIn } from "@/lib/selectors";
 import { useAppActions, useAppState } from "@/lib/store/app-store";
 import type { Habit } from "@/lib/types";
-import { GoalProgress } from "./goal-progress";
+import { GoalsSection } from "./goals-section";
 import { HabitFormDialog } from "./habit-form-dialog";
 import { HabitLoadState } from "./habit-load-state";
 import { HabitRow } from "./habit-row";
 import { HabitCalendar } from "./habit-calendar";
 
 export function HabitsView() {
-  const { habits, habitsStatus, goals, today, pendingHabitIds } = useAppState();
+  const { habits, habitsStatus, today, pendingHabitIds } = useAppState();
   const { archiveHabit } = useAppActions();
   const [filter,setFilter] = useState<"active" | "archived">("active");
   const [view,setView]=useState<"list"|"calendar">("list");
@@ -50,7 +50,7 @@ export function HabitsView() {
       </Card>}
     </>}
     {view==="calendar"&&<HabitCalendar />}
-    <Card id="goals" className="scroll-mt-24"><CardHeader title="Goals" description="Sample goals for now; persistent goals come in a later step." icon={<Trophy className="h-5 w-5" />} /><div className="grid gap-6 sm:grid-cols-2">{goals.map((g) => <GoalProgress key={g.id} goal={g} />)}</div></Card>
+    <GoalsSection />
     <HabitFormDialog open={creating || !!editing} habit={editing} onClose={() => { setCreating(false); setEditing(undefined); }} />
   </>;
 }

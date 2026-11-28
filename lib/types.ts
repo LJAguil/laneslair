@@ -72,6 +72,8 @@ export interface Habit {
 export interface Goal {
   id: string;
   title: string;
+  description?: string;
+  status?: "active" | "paused" | "completed" | "archived";
   /** Unit label such as "books", "miles", "%". */
   unit: string;
   current: number;

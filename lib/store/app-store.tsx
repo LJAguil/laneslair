@@ -4,8 +4,8 @@
 // Every mutation goes through `actions`, so components never talk to the
 // database directly.
 //
-// Tasks, projects, habits, Inbox, daily focus, and Journal (after migration 004) persist in Supabase. Everything else
-// (goals, events, schedule, chats) is still
+// Tasks, projects, habits, goals, Inbox, daily focus, and Journal (after migration 004) persist in Supabase. Everything else
+// (events, schedule, chats) is still
 // local sample data that resets on a full page reload.
 // The bell derives real task attention items; legacy notification state is empty.
 
@@ -18,7 +18,7 @@ import * as taskData from "@/lib/data/tasks";
 import { toISODate, timestampToLocalDateTime } from "@/lib/dates";
 import { subscribeTaskClock, taskClockSnapshot } from "@/lib/browser/task-clock";
 import { sampleEvents } from "@/lib/sample-data/events";
-import { sampleGoals } from "@/lib/sample-data/habits-goals";
+import { createGoalActions, initialGoalState, reduceGoals, type GoalAction, type GoalSlice } from "./goal-state";
 import { sampleConversations, sampleProfile, sampleSchedule } from "@/lib/sample-data/misc";
 import * as projectData from "@/lib/data/projects";
 import { undoAction, type UndoAction } from "@/lib/undo";
@@ -26,7 +26,6 @@ import type {
   AppNotification,
   ChatMessage,
   Conversation,
-  Goal,
   ISODate,
   LocalEvent,
   NewTaskInput,
@@ -45,7 +44,7 @@ export interface Notice {
   undo?: UndoAction;
 }
 
-export interface AppState extends InboxSlice, HabitSlice, JournalSlice {
+export interface AppState extends InboxSlice, HabitSlice, JournalSlice, GoalSlice {
   /** The user's local calendar day, read once in the browser. */
   today: ISODate;
   /** Browser clock, refreshed at minute boundaries and on foregrounding. */
@@ -61,7 +60,6 @@ export interface AppState extends InboxSlice, HabitSlice, JournalSlice {
   projectsStatus: LoadStatus;
   projectsError: string | null;
   pendingProjectIds: string[];
-  goals: Goal[];
   events: LocalEvent[];
   schedule: ScheduleItem[];
   notifications: AppNotification[];
@@ -74,6 +72,7 @@ function createInitialState(today: ISODate): AppState {
     ...initialInboxState,
     ...initialJournalState,
     ...initialHabitState,
+    ...initialGoalState,
     today,
     now: 0,
     tasks: [],
@@ -85,7 +84,6 @@ function createInitialState(today: ISODate): AppState {
     projectsStatus: "loading",
     projectsError: null,
     pendingProjectIds: [],
-    goals: sampleGoals(today),
     events: sampleEvents(today),
     schedule: sampleSchedule(today),
     notifications: [],
@@ -94,7 +92,7 @@ function createInitialState(today: ISODate): AppState {
   };
 }
 
-type Action = InboxAction | HabitAction | JournalAction
+type Action = InboxAction | HabitAction | JournalAction | GoalAction
   | { type: "projects/loading" }
   | { type: "projects/loaded"; projects: Project[] }
   | { type: "projects/failed"; message: string }
@@ -118,6 +116,8 @@ type Action = InboxAction | HabitAction | JournalAction
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
+    case "goals/loading": case "goals/loaded": case "goals/failed": case "goals/saved": case "goals/deleted": case "goals/pending":
+      return { ...state, ...reduceGoals(state, action) };
     case "journal/addition-draft":case "journal/addition-clear":case "journal/addition-rebase":case "journal/index-loading":case "journal/index-error":case "journal/index":case "journal/day-loading":case "journal/day-error":case "journal/entry":case "journal/source":case "journal/draft":case "journal/reset":case "journal/merge":case "journal/pending":case "journal/note-pending":
       return {...state,...reduceJournal(state,action)};
     case "habits/loading": case "habits/loaded": case "habits/failed": case "habits/saved": case "habits/pending": case "habits/log-failed": case "habits/log-confirmed":
@@ -226,6 +226,7 @@ export function createActions(dispatch: React.Dispatch<Action>) {
   return {
     ...createJournalActions(dispatch,notify),
     ...createHabitActions(dispatch, notify),
+    ...createGoalActions(dispatch, notify),
     ...createInboxActions((action) => {
       if (action.type === "task/add") recordTaskAction(action);
       else dispatch(action);
@@ -419,6 +420,7 @@ function StoreProvider({ today, now, children }: { today: ISODate; now: number; 
     void actions.loadInbox({ showLoading: false });
     void actions.loadFocus({ showLoading: false });
     void actions.loadHabits({ showLoading: false });
+    void actions.loadGoals({ showLoading: false });
     void actions.loadJournalIndex({ showLoading: false });
   }, [actions]);
 

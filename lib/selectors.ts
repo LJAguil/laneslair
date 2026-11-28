@@ -88,7 +88,8 @@ export const isCheckedIn = (habit: Habit, date: ISODate) =>
   habit.checkIns.includes(date);
 
 export function goalPercent(goal: Goal): number {
-  return Math.min(100, Math.round((goal.current / goal.target) * 100));
+  return goal.target > 0 && Number.isFinite(goal.target) && Number.isFinite(goal.current)
+    ? Math.max(0, Math.min(100, Math.round((goal.current / goal.target) * 100))) : 0;
 }
 
 export interface ActivityDay {

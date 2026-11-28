@@ -15,7 +15,7 @@ A personal command center for tasks, projects, habits, goals, events, and an AI 
 | Today | Quick capture, persisted daily focus, and a short task radar (new migration required for focus) |
 | Projects | Supabase creation/editing, Active/Paused/Completed/Archived statuses, task links and progress |
 | Habits | Persistent check-ins, water/quantity targets, optional daily or weekly streaks, archive/restore (habits migration required) |
-| Goals | Sample data; persistent goals are a later milestone |
+| Goals | Personal goals saved to your account: targets, progress, optional dates, pause/archive, completion/reopening and deletion; active goals appear on Overview ([guide](docs/GOALS.md)) |
 | Themes | Classic Lair, Grand Voyage, and Shire Night; saved per browser |
 | Today / Daily Play | Published hub, Rune Lock and optional account sync in `1e7befe`; owner reports 005 applied ([sync setup](docs/DAILY_PLAY_SYNC.md)) |
 | Daily chess | Published selectable difficulty, bundled tactics, accessible board and optional sync in `1e7befe`; owner reports 006 applied ([guide](docs/DAILY_CHESS.md)) |
